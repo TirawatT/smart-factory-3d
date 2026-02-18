@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Twin — Smart Factory Platform</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #070d18;
+  --surface: #0b1520;
+  --surface2: #0f1d2e;
+  --surface3: #142338;
+  --border: #192e48;
+  --border2: #1e3c60;
+  --accent: #00c8ff;
+  --accent-dim: rgba(0,200,255,0.1);
+  --accent2: #00ff9d;
+  --accent2-dim: rgba(0,255,157,0.08);
+  --warn: #ffb800;
+  --warn-dim: rgba(255,184,0,0.1);
+  --danger: #ff4560;
+  --danger-dim: rgba(255,69,96,0.1);
+  --text: #cfe0f2;
+  --text-dim: #4e6f90;
+  --text-muted: #243a52;
+  --online: #00ff9d;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* TOP NAV */
+.topnav {
+  height: 50px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 14px;
+  flex-shrink: 0; z-index: 20;
+}
+.logo { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:700; letter-spacing:0.14em; color:var(--accent); text-transform:uppercase; white-space:nowrap; }
+.logo span { color:var(--text-dim); font-weight:400; }
+.nav-div { width:1px; height:22px; background:var(--border); }
+.nav-links { display:flex; gap:2px; flex:1; }
+.nav-link { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-dim); padding:5px 13px; border-radius:4px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.nav-link:hover { color:var(--text); background:var(--surface2); }
+.nav-link.active { color:var(--accent); background:var(--accent-dim); border:1px solid rgba(0,200,255,0.18); }
+.nav-right { display:flex; align-items:center; gap:10px; margin-left:auto; }
+.site-pill { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-dim); background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:4px 10px; display:flex; align-items:center; gap:6px; }
+.site-dot { width:6px; height:6px; border-radius:50%; background:var(--online); box-shadow:0 0 6px var(--online); animation:blink 2s ease infinite; }
+.avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#1a3a6a,#0d2040); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:var(--accent); font-family:'IBM Plex Mono',monospace; }
+
+/* BREADCRUMB */
+.breadcrumb-bar {
+  height: 42px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 18px; gap: 0;
+  flex-shrink: 0; z-index: 10;
+  overflow-x: auto;
+}
+.breadcrumb-bar::-webkit-scrollbar { display:none; }
+.bc-item { display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-dim); padding:4px 10px; border-radius:4px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.bc-item:hover { color:var(--text); background:var(--surface3); }
+.bc-item.active { color:var(--accent); background:var(--accent-dim); cursor:default; }
+.bc-item.unvisited { color:var(--text-muted); cursor:default; }
+.bc-arrow { color:var(--text-muted); font-size:13px; padding:0 1px; user-select:none; }
+.bc-lv { font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-muted); }
+
+/* MAIN */
+.main { flex:1; display:flex; overflow:hidden; }
+
+/* VIEWER 70% */
+.viewer-wrap { flex:0 0 70%; position:relative; overflow:hidden; background:var(--bg); }
+
+.level-view {
+  position: absolute; inset: 0;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+  display: flex; align-items: center; justify-content: center;
+}
+.level-view.active { opacity:1; pointer-events:all; }
+
+.grid-bg {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px), linear-gradient(90deg,rgba(0,200,255,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Viewer labels */
+.vlabel { position:absolute; top:16px; left:16px; z-index:5; }
+.vtag { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.18); padding:3px 10px; border-radius:3px; display:inline-block; margin-bottom:6px; }
+.vname { font-family:'Barlow',sans-serif; font-size:20px; font-weight:700; color:var(--text); line-height:1; text-shadow:0 2px 20px rgba(0,0,0,0.9); }
+.vsub { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); margin-top:4px; }
+.mt-badge { position:absolute; top:16px; right:16px; z-index:5; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-muted); background:rgba(7,13,24,0.8); border:1px solid var(--border); padding:4px 10px; border-radius:3px; display:flex; align-items:center; gap:6px; }
+.live-dot { width:5px; height:5px; border-radius:50%; background:var(--online); box-shadow:0 0 5px var(--online); animation:blink 1.5s ease infinite; }
+
+/* ── LV0: FACTORY AERIAL ── */
+#lv0 { background:radial-gradient(ellipse at 40% 60%, #0a2040 0%, #070d18 70%); }
+.aerial-scene { position:relative; width:680px; height:430px; }
+
+.bldg {
+  position: absolute; border-radius:4px; border:1px solid #1e3a5f;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:5px; overflow:hidden;
+}
+.bldg::before { content:''; position:absolute; inset:0; transition:background 0.2s; }
+.bldg:hover { border-color:var(--accent); box-shadow:0 0 24px rgba(0,200,255,0.15); transform:scale(1.02); }
+.bldg:hover::before { background:rgba(0,200,255,0.05); }
+.roof-lines { position:absolute; inset:6px; border:1px dashed rgba(0,200,255,0.07); border-radius:2px; pointer-events:none; }
+.bldg-label { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); text-align:center; position:relative; z-index:1; }
+.bldg-sub { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-muted); text-align:center; position:relative; z-index:1; }
+.bldg-st { font-family:'IBM Plex Mono',monospace; font-size:8px; padding:2px 8px; border-radius:10px; position:relative; z-index:1; }
+.st-ok { background:var(--accent2-dim); color:var(--accent2); border:1px solid rgba(0,255,157,0.2); }
+.st-warn { background:var(--warn-dim); color:var(--warn); border:1px solid rgba(255,184,0,0.2); }
+
+/* Road lines */
+.road { position:absolute; background:#0c1a2a; }
+.road-h { height:16px; left:0; right:0; border-top:1px solid #1a3050; border-bottom:1px solid #1a3050; }
+.road-v { width:16px; top:0; bottom:0; border-left:1px solid #1a3050; border-right:1px solid #1a3050; }
+
+.click-hint { position:absolute; bottom:12px; right:12px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-muted); animation:fadepulse 2s ease infinite; }
+
+/* ── LV1: BUILDING ── */
+#lv1 { background:radial-gradient(ellipse at 50% 40%, #0c1e35 0%, #070d18 70%); }
+.floor-stack { display:flex; flex-direction:column-reverse; gap:10px; width:520px; }
+.floor-card { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:14px 20px; display:flex; align-items:center; gap:16px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+.floor-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--border2); transition:background 0.2s; }
+.floor-card:hover { border-color:var(--accent); background:var(--accent-dim); transform:translateX(4px); }
+.floor-card:hover::before { background:var(--accent); }
+.floor-num { font-family:'Barlow Condensed',sans-serif; font-size:30px; font-weight:700; color:var(--text-muted); line-height:1; width:42px; text-align:center; flex-shrink:0; }
+.floor-card:hover .floor-num { color:var(--accent); }
+.floor-info { flex:1; }
+.floor-name { font-size:14px; font-weight:600; color:var(--text); margin-bottom:3px; }
+.floor-meta { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-dim); }
+.floor-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
+.ftag { font-family:'IBM Plex Mono',monospace; font-size:8px; padding:2px 7px; border-radius:3px; }
+.floor-arr { color:var(--text-muted); font-size:18px; flex-shrink:0; }
+
+/* ── LV2: FLOOR PLAN ── */
+#lv2 { background:#060c16; }
+.fp-scene { position:relative; width:640px; height:400px; }
+.fp-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(0,200,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.05) 1px,transparent 1px); background-size:30px 30px; }
+.corridor { position:absolute; background:rgba(0,200,255,0.02); border:1px dashed rgba(0,200,255,0.07); }
+.room { position:absolute; border-radius:3px; border:1px solid var(--border2); cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; background:var(--surface2); }
+.room:hover { border-color:var(--accent); background:var(--accent-dim); z-index:5; }
+.room.has-warn { border-color:var(--warn); background:var(--warn-dim); }
+.room.has-fault { border-color:var(--danger); background:var(--danger-dim); animation:fault-pulse 2s ease infinite; }
+.room-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-dim); text-align:center; }
+.room:hover .room-label { color:var(--accent); }
+.room.has-warn .room-label { color:var(--warn); }
+.room.has-fault .room-label { color:var(--danger); }
+.room-sub { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-muted); text-align:center; }
+.room-dot { width:6px; height:6px; border-radius:50%; margin-top:2px; }
+.compass { position:absolute; bottom:16px; left:16px; font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--text-muted); border:1px solid var(--border); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:rgba(7,13,24,0.8); }
+
+/* ── LV3: ROOM 3D ── */
+#lv3 { background:#050c16; }
+.matterport-scene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+.perspective-room { width:560px; height:310px; position:relative; }
+.wall-back { position:absolute; top:30px; left:80px; right:80px; height:200px; background:linear-gradient(180deg,#0c1b2e,#091525); border:1px solid #1a3050; }
+.wall-left { position:absolute; top:55px; left:0; width:80px; height:200px; background:linear-gradient(90deg,#091525,#0c1b2e); border:1px solid #162840; clip-path:polygon(100% 0,100% 100%,0 80%,0 20%); }
+.wall-right { position:absolute; top:55px; right:0; width:80px; height:200px; background:linear-gradient(270deg,#091525,#0c1b2e); border:1px solid #162840; clip-path:polygon(0 0,0 100%,100% 80%,100% 20%); }
+.floor-3d { position:absolute; bottom:0; left:60px; right:60px; height:155px; background:linear-gradient(180deg,#0d1e32,#091525); border:1px solid #1a3050; transform:rotateX(45deg); transform-origin:bottom center; background-image:linear-gradient(rgba(0,200,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.05) 1px,transparent 1px); background-size:40px 40px; }
+.machine-3d { position:absolute; border-radius:4px; border:1px solid var(--border2); background:var(--surface2); cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+.machine-3d:hover { border-color:var(--accent); box-shadow:0 0 16px rgba(0,200,255,0.2); }
+.machine-3d.fault { border-color:var(--danger); animation:fault-pulse 1.5s ease infinite; }
+.machine-3d.warn-m { border-color:var(--warn); }
+.m3d-icon { font-size:20px; }
+.m3d-label { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); text-align:center; }
+.m3d-dot { width:6px; height:6px; border-radius:50%; }
+.nav-arrows { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:5; }
+.nav-arr { width:36px; height:36px; background:rgba(7,13,24,0.85); border:1px solid var(--border2); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--text-dim); cursor:pointer; transition:all 0.15s; backdrop-filter:blur(6px); }
+.nav-arr:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── LV4: MACHINE DETAIL ── */
+#lv4 { background:#050b15; }
+.machine-detail { position:relative; width:620px; height:380px; display:flex; gap:24px; align-items:center; }
+.machine-box { width:220px; height:300px; flex-shrink:0; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; position:relative; overflow:hidden; }
+.machine-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent2),transparent); }
+.m-big-icon { font-size:52px; }
+.m-id { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--accent); letter-spacing:0.12em; }
+.m-name { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; color:var(--text); text-align:center; line-height:1.2; }
+.m-badge { font-family:'IBM Plex Mono',monospace; font-size:9px; padding:3px 12px; border-radius:12px; background:var(--accent2-dim); color:var(--accent2); border:1px solid rgba(0,255,157,0.25); animation:blink 2s ease infinite; }
+.gauges { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.gauge { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:12px; }
+.g-name { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:5px; }
+.g-val { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700; line-height:1; color:var(--text); }
+.g-val.ok { color:var(--accent2); }
+.g-val.warn { color:var(--warn); }
+.g-unit { font-size:11px; font-weight:400; color:var(--text-dim); margin-left:2px; }
+.g-bar-wrap { margin-top:7px; height:3px; background:var(--surface3); border-radius:2px; }
+.g-bar { height:100%; border-radius:2px; }
+.bar-ok { background:var(--accent2); }
+.bar-warn { background:var(--warn); }
+.bar-acc { background:var(--accent); }
+
+/* Level buttons */
+.viewer-btns { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:10; }
+.vbtn { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:6px 14px; border-radius:4px; border:1px solid var(--border2); background:rgba(7,13,24,0.88); color:var(--text-dim); cursor:pointer; transition:all 0.15s; backdrop-filter:blur(8px); white-space:nowrap; }
+.vbtn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+.vbtn.cur { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+/* INFO PANEL 30% */
+.info-panel { flex:0 0 30%; background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.panel-head { padding:12px 14px 0; flex-shrink:0; border-bottom:1px solid var(--border); }
+.ph-loc { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-muted); letter-spacing:0.08em; margin-bottom:3px; }
+.ph-name { font-family:'Barlow',sans-serif; font-size:14px; font-weight:700; color:var(--text); margin-bottom:10px; }
+.tabs { display:flex; gap:0; }
+.tab { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; padding:7px 14px; cursor:pointer; color:var(--text-dim); border-bottom:2px solid transparent; transition:all 0.15s; white-space:nowrap; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab-badge { background:var(--danger-dim); color:var(--danger); font-size:8px; padding:1px 5px; border-radius:10px; margin-left:3px; }
+
+.panel-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.panel-body::-webkit-scrollbar { width:3px; }
+.panel-body::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+.tab-content { display:none; flex-direction:column; gap:8px; }
+.tab-content.active { display:flex; animation:fadeUp 0.2s ease both; }
+
+.sec-lbl { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); padding-bottom:5px; border-bottom:1px solid var(--border); }
+.stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+.stat-box { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:8px; text-align:center; }
+.stat-n { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; line-height:1; margin-bottom:2px; }
+.stat-l { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; }
+
+.scard { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:9px 11px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.scard.warn { border-left:3px solid var(--warn); }
+.scard.danger { border-left:3px solid var(--danger); }
+.scard.ok { border-left:3px solid var(--accent2); }
+.sc-left { flex:1; min-width:0; }
+.sc-name { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:0.05em; margin-bottom:3px; }
+.sc-val { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; line-height:1; }
+.sc-val.warn { color:var(--warn); }
+.sc-val.danger { color:var(--danger); }
+.sc-unit { font-size:10px; font-weight:400; color:var(--text-dim); margin-left:1px; }
+.spark { width:55px; height:22px; }
+
+.mitem { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:9px 11px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:8px; }
+.mitem:hover { border-color:var(--accent); background:var(--accent-dim); }
+.mi-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.d-online { background:var(--online); box-shadow:0 0 5px var(--online); animation:blink 2s ease infinite; }
+.d-warn { background:var(--warn); box-shadow:0 0 5px var(--warn); }
+.d-fault { background:var(--danger); box-shadow:0 0 5px var(--danger); }
+.d-idle { background:var(--text-muted); }
+.mi-info { flex:1; min-width:0; }
+.mi-name { font-size:11px; font-weight:600; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mi-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); }
+.mtag { font-family:'IBM Plex Mono',monospace; font-size:7px; padding:2px 6px; border-radius:3px; flex-shrink:0; }
+.mt-run { background:var(--accent2-dim); color:var(--accent2); border:1px solid rgba(0,255,157,0.2); }
+.mt-idle { background:rgba(78,111,144,0.1); color:var(--text-dim); border:1px solid var(--border); }
+.mt-fault { background:var(--danger-dim); color:var(--danger); border:1px solid rgba(255,69,96,0.2); }
+
+.aitem { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:9px 11px; display:flex; gap:8px; align-items:flex-start; }
+.aitem.crit { border-left:3px solid var(--danger); }
+.aitem.wrn { border-left:3px solid var(--warn); }
+.aitem.inf { border-left:3px solid var(--accent); }
+.ai-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
+.ai-body { flex:1; min-width:0; }
+.ai-title { font-size:11px; font-weight:600; color:var(--text); margin-bottom:3px; line-height:1.3; }
+.ai-meta { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-dim); }
+.abadge { font-family:'IBM Plex Mono',monospace; font-size:7px; padding:2px 6px; border-radius:3px; flex-shrink:0; margin-top:1px; }
+.ab-crit { background:var(--danger-dim); color:var(--danger); border:1px solid rgba(255,69,96,0.25); }
+.ab-warn { background:var(--warn-dim); color:var(--warn); border:1px solid rgba(255,184,0,0.25); }
+.ab-res { background:var(--accent2-dim); color:var(--accent2); border:1px solid rgba(0,255,157,0.2); }
+
+.statusbar { height:26px; background:var(--surface2); border-top:1px solid var(--border); display:flex; align-items:center; padding:0 12px; gap:14px; flex-shrink:0; }
+.sbi { font-family:'IBM Plex Mono',monospace; font-size:8px; color:var(--text-muted); display:flex; align-items:center; gap:4px; white-space:nowrap; }
+.sd { width:5px; height:5px; border-radius:50%; }
+.sd-g { background:var(--online); box-shadow:0 0 4px var(--online); }
+.sd-y { background:var(--warn); }
+.sd-b { background:var(--accent); }
+
+/* Animations */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+@keyframes fadepulse { 0%,100%{opacity:0.4} 50%{opacity:0.85} }
+@keyframes fault-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,69,96,0.15)} 50%{box-shadow:0 0 14px 4px rgba(255,69,96,0.12)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topnav">
+  <div class="logo">SF<span>Platform</span></div>
+  <div class="nav-div"></div>
+  <div class="nav-links">
+    <div class="nav-link">Dashboard</div>
+    <div class="nav-link active">Digital Twin</div>
+    <div class="nav-link">Control Panel</div>
+    <div class="nav-link">Alerts</div>
+    <div class="nav-link">Energy</div>
+    <div class="nav-link">Analytics</div>
+  </div>
+  <div class="nav-right">
+    <div class="site-pill"><div class="site-dot"></div>NMC Factory — Chonburi</div>
+    <div class="avatar">OP</div>
+  </div>
+</div>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb-bar">
+  <div class="bc-item active" id="bc0" onclick="goLevel(0)"><span>🏭</span><span class="bc-lv">Site &nbsp;</span><span id="bct0">NMC Chonburi</span></div>
+  <div class="bc-arrow">›</div>
+  <div class="bc-item unvisited" id="bc1" onclick="goLevel(1)"><span>🏢</span><span class="bc-lv">Building &nbsp;</span><span id="bct1">—</span></div>
+  <div class="bc-arrow">›</div>
+  <div class="bc-item unvisited" id="bc2" onclick="goLevel(2)"><span>📐</span><span class="bc-lv">Floor &nbsp;</span><span id="bct2">—</span></div>
+  <div class="bc-arrow">›</div>
+  <div class="bc-item unvisited" id="bc3" onclick="goLevel(3)"><span>🚪</span><span class="bc-lv">Room &nbsp;</span><span id="bct3">—</span></div>
+  <div class="bc-arrow">›</div>
+  <div class="bc-item unvisited" id="bc4" onclick="goLevel(4)"><span>⚙</span><span class="bc-lv">Machine &nbsp;</span><span id="bct4">—</span></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- VIEWER 70% -->
+  <div class="viewer-wrap">
+
+    <!-- LV0: FACTORY AERIAL -->
+    <div class="level-view active" id="lv0">
+      <div class="grid-bg"></div>
+      <div class="vlabel">
+        <div class="vtag">Level 0 — Factory Overview</div>
+        <div class="vname">NMC Chonburi</div>
+        <div class="vsub">มุมมองจากด้านบน · คลิกอาคารเพื่อ drill down</div>
+      </div>
+      <div class="mt-badge"><div class="live-dot"></div>Aerial View · 4 Buildings</div>
+
+      <div class="aerial-scene">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#070d18,#0a1525);border:1px solid #1a3050;border-radius:6px;"></div>
+        <!-- Roads -->
+        <div class="road road-h" style="bottom:130px;"></div>
+        <div class="road road-v" style="left:210px;"></div>
+        <div class="road road-v" style="right:170px;"></div>
+        <!-- Building A -->
+        <div class="bldg" style="left:30px;top:60px;width:160px;height:185px;background:linear-gradient(135deg,#0f1e32,#0c1828);" onclick="clickBuilding('A','อาคาร A — Production')">
+          <div class="roof-lines"></div>
+          <div class="bldg-label">อาคาร A</div>
+          <div class="bldg-sub">Production</div>
+          <div class="bldg-st st-warn">⚠ 1 Warning</div>
+        </div>
+        <!-- Building B -->
+        <div class="bldg" style="left:230px;top:30px;width:185px;height:225px;background:linear-gradient(135deg,#0d1e35,#0a1828);" onclick="clickBuilding('B','อาคาร B — Assembly & QC')">
+          <div class="roof-lines"></div>
+          <div class="bldg-label">อาคาร B</div>
+          <div class="bldg-sub">Assembly & QC</div>
+          <div class="bldg-st st-ok">● All Normal</div>
+        </div>
+        <!-- Building C -->
+        <div class="bldg" style="right:30px;top:80px;width:145px;height:155px;background:linear-gradient(135deg,#0c1c30,#091525);" onclick="clickBuilding('C','อาคาร C — Warehouse')">
+          <div class="roof-lines"></div>
+          <div class="bldg-label">อาคาร C</div>
+          <div class="bldg-sub">Warehouse</div>
+          <div class="bldg-st st-ok">● All Normal</div>
+        </div>
+        <!-- Building D -->
+        <div class="bldg" style="left:50px;bottom:25px;width:260px;height:82px;background:linear-gradient(135deg,#0a1828,#080f1e);" onclick="clickBuilding('D','อาคาร D — Utility')">
+          <div class="roof-lines"></div>
+          <div class="bldg-label">อาคาร D — Utility</div>
+          <div class="bldg-sub">Power · Cooling · Air Supply</div>
+        </div>
+        <div class="click-hint">👆 คลิกอาคารเพื่อดูรายละเอียด</div>
+      </div>
+    </div>
+
+    <!-- LV1: BUILDING -->
+    <div class="level-view" id="lv1">
+      <div class="grid-bg" style="opacity:0.35;"></div>
+      <div class="vlabel">
+        <div class="vtag">Level 1 — Building</div>
+        <div class="vname" id="lv1-name">อาคาร A — Production</div>
+        <div class="vsub">เลือกชั้นที่ต้องการ</div>
+      </div>
+      <div class="mt-badge"><div class="live-dot"></div>Building View</div>
+      <div class="floor-stack">
+        <div class="floor-card" onclick="clickFloor('ชั้น 1','Production Floor')">
+          <div class="floor-num">1F</div>
+          <div class="floor-info">
+            <div class="floor-name">ชั้น 1 — Production Floor</div>
+            <div class="floor-meta">8 Rooms · 24 Machines</div>
+            <div class="floor-tags">
+              <span class="ftag" style="background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,69,96,0.2);">🔴 1 Fault</span>
+              <span class="ftag" style="background:var(--warn-dim);color:var(--warn);border:1px solid rgba(255,184,0,0.2);">⚠ 1 Warning</span>
+              <span class="ftag" style="background:var(--accent2-dim);color:var(--accent2);border:1px solid rgba(0,255,157,0.2);">Clean Room</span>
+            </div>
+          </div>
+          <div class="floor-arr">›</div>
+        </div>
+        <div class="floor-card" onclick="clickFloor('ชั้น 2','Engineering & Office')">
+          <div class="floor-num">2F</div>
+          <div class="floor-info">
+            <div class="floor-name">ชั้น 2 — Engineering & Office</div>
+            <div class="floor-meta">6 Rooms · Control Station</div>
+            <div class="floor-tags">
+              <span class="ftag" style="background:var(--accent2-dim);color:var(--accent2);border:1px solid rgba(0,255,157,0.2);">● All Normal</span>
+            </div>
+          </div>
+          <div class="floor-arr">›</div>
+        </div>
+        <div class="floor-card" onclick="clickFloor('ชั้น 3','R&D Lab')">
+          <div class="floor-num">3F</div>
+          <div class="floor-info">
+            <div class="floor-name">ชั้น 3 — R&D Lab</div>
+            <div class="floor-meta">4 Rooms · Prototype Zone</div>
+            <div class="floor-tags">
+              <span class="ftag" style="background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,200,255,0.2);">Restricted</span>
+            </div>
+          </div>
+          <div class="floor-arr">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LV2: FLOOR PLAN -->
+    <div class="level-view" id="lv2">
+      <div class="vlabel">
+        <div class="vtag">Level 2 — Floor Plan</div>
+        <div class="vname" id="lv2-name">ชั้น 1 — Production Floor</div>
+        <div class="vsub">คลิกห้องเพื่อเข้า Matterport 3D</div>
+      </div>
+      <div class="mt-badge"><div class="live-dot"></div>Floor Plan · 8 Rooms</div>
+      <div class="fp-scene">
+        <div class="fp-grid"></div>
+        <div class="corridor" style="left:100px;right:100px;top:195px;height:26px;"></div>
+        <div class="corridor" style="left:308px;top:55px;bottom:55px;width:26px;"></div>
+        <!-- Rooms -->
+        <div class="room has-warn" style="left:28px;top:38px;width:255px;height:142px;" onclick="clickRoom('Clean Room CR-01')">
+          <div class="room-label">Clean Room CR-01</div>
+          <div class="room-sub">Production Zone A</div>
+          <div class="room-dot" style="background:var(--warn);box-shadow:0 0 6px var(--warn);"></div>
+        </div>
+        <div class="room has-fault" style="left:350px;top:38px;width:162px;height:142px;" onclick="clickRoom('MFG Zone 02')">
+          <div class="room-label">MFG Zone 02</div>
+          <div class="room-sub">Heavy Machining</div>
+          <div class="room-dot" style="background:var(--danger);box-shadow:0 0 6px var(--danger);animation:blink 1s ease infinite;"></div>
+        </div>
+        <div class="room" style="right:28px;top:38px;width:95px;height:142px;" onclick="clickRoom('Utility Room A')">
+          <div class="room-label" style="font-size:9px;">Utility A</div>
+          <div class="room-dot" style="background:var(--online);box-shadow:0 0 5px var(--online);"></div>
+        </div>
+        <div class="room" style="left:28px;bottom:38px;width:125px;height:118px;" onclick="clickRoom('Storage 01')">
+          <div class="room-label" style="font-size:10px;">Storage 01</div>
+          <div class="room-dot" style="background:var(--online);box-shadow:0 0 5px var(--online);"></div>
+        </div>
+        <div class="room" style="left:172px;bottom:38px;width:158px;height:118px;" onclick="clickRoom('QC Room')">
+          <div class="room-label">QC Room</div>
+          <div class="room-sub">Inspection</div>
+          <div class="room-dot" style="background:var(--online);box-shadow:0 0 5px var(--online);"></div>
+        </div>
+        <div class="room" style="left:350px;bottom:38px;width:267px;height:118px;" onclick="clickRoom('Packaging Zone')">
+          <div class="room-label">Packaging Zone</div>
+          <div class="room-sub">Pack · Label · Ship</div>
+          <div class="room-dot" style="background:var(--online);box-shadow:0 0 5px var(--online);"></div>
+        </div>
+        <div class="compass">N↑</div>
+      </div>
+    </div>
+
+    <!-- LV3: ROOM 3D -->
+    <div class="level-view" id="lv3">
+      <div class="vlabel">
+        <div class="vtag">Level 3 — 3D Virtual Tour</div>
+        <div class="vname" id="lv3-name">Clean Room CR-01</div>
+        <div class="vsub">Matterport 3D · คลิกเครื่องเพื่อดูรายละเอียด</div>
+      </div>
+      <div class="mt-badge"><div class="live-dot"></div>Matterport Live</div>
+      <div class="matterport-scene">
+        <div class="perspective-room">
+          <div class="wall-back"></div>
+          <div class="wall-left"></div>
+          <div class="wall-right"></div>
+          <div class="floor-3d"></div>
+          <div class="machine-3d" style="left:105px;top:75px;width:88px;height:78px;" onclick="clickMachine('CNC-001','CNC Machining #001','⚙️','● RUNNING')">
+            <div class="m3d-icon">⚙️</div>
+            <div class="m3d-label">CNC-001</div>
+            <div class="m3d-dot" style="background:var(--online);box-shadow:0 0 5px var(--online);margin:0 auto;"></div>
+          </div>
+          <div class="machine-3d warn-m" style="left:222px;top:66px;width:88px;height:78px;" onclick="clickMachine('ROBOT-02','Robot Arm #002','🦾','⚠ WARNING')">
+            <div class="m3d-icon">🦾</div>
+            <div class="m3d-label">ROBOT-02</div>
+            <div class="m3d-dot" style="background:var(--warn);box-shadow:0 0 5px var(--warn);margin:0 auto;"></div>
+          </div>
+          <div class="machine-3d fault" style="left:338px;top:80px;width:88px;height:78px;" onclick="clickMachine('PUMP-03','Coolant Pump #003','🔧','🔴 FAULT')">
+            <div class="m3d-icon">🔧</div>
+            <div class="m3d-label">PUMP-03</div>
+            <div class="m3d-dot" style="background:var(--danger);box-shadow:0 0 5px var(--danger);margin:0 auto;"></div>
+          </div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);text-align:center;">[ Matterport 3D Viewer — เดินในพื้นที่จริงได้ · คลิก Hotspot เพื่อไปยังเครื่อง ]</div>
+      </div>
+      <div class="nav-arrows">
+        <div class="nav-arr">←</div><div class="nav-arr">↑</div><div class="nav-arr">↓</div><div class="nav-arr">→</div>
+      </div>
+    </div>
+
+    <!-- LV4: MACHINE DETAIL -->
+    <div class="level-view" id="lv4">
+      <div class="vlabel">
+        <div class="vtag">Level 4 — Machine Detail</div>
+        <div class="vname" id="lv4-name">CNC Machining #001</div>
+        <div class="vsub" id="lv4-sub">ID: CNC-001 · CR-01 · อาคาร A ชั้น 1</div>
+      </div>
+      <div class="mt-badge"><div class="live-dot"></div>Live Sensor Feed</div>
+      <div class="machine-detail">
+        <div class="machine-box">
+          <div class="m-big-icon" id="lv4-icon">⚙️</div>
+          <div class="m-id" id="lv4-id">CNC-001</div>
+          <div class="m-name" id="lv4-mname">CNC Machining<br>#001</div>
+          <div class="m-badge" id="lv4-badge">● RUNNING</div>
+        </div>
+        <div class="gauges">
+          <div class="gauge"><div class="g-name">Spindle Speed</div><div class="g-val ok">2,400<span class="g-unit">RPM</span></div><div class="g-bar-wrap"><div class="g-bar bar-ok" style="width:75%;"></div></div></div>
+          <div class="gauge"><div class="g-name">Temperature</div><div class="g-val">68<span class="g-unit">°C</span></div><div class="g-bar-wrap"><div class="g-bar bar-acc" style="width:60%;"></div></div></div>
+          <div class="gauge"><div class="g-name">Vibration</div><div class="g-val warn">78<span class="g-unit">Hz</span></div><div class="g-bar-wrap"><div class="g-bar bar-warn" style="width:82%;"></div></div></div>
+          <div class="gauge"><div class="g-name">Power</div><div class="g-val ok">18.4<span class="g-unit">kW</span></div><div class="g-bar-wrap"><div class="g-bar bar-ok" style="width:55%;"></div></div></div>
+          <div class="gauge"><div class="g-name">OEE</div><div class="g-val ok">87<span class="g-unit">%</span></div><div class="g-bar-wrap"><div class="g-bar bar-ok" style="width:87%;"></div></div></div>
+          <div class="gauge"><div class="g-name">Runtime Today</div><div class="g-val">6.4<span class="g-unit">hr</span></div><div class="g-bar-wrap"><div class="g-bar bar-acc" style="width:70%;"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level buttons -->
+    <div class="viewer-btns">
+      <div class="vbtn cur" id="btn0" onclick="goLevel(0)">🏭 Factory</div>
+      <div class="vbtn" id="btn1" onclick="goLevel(1)">🏢 Building</div>
+      <div class="vbtn" id="btn2" onclick="goLevel(2)">📐 Floor</div>
+      <div class="vbtn" id="btn3" onclick="goLevel(3)">🚪 Room</div>
+      <div class="vbtn" id="btn4" onclick="goLevel(4)">⚙ Machine</div>
+    </div>
+  </div>
+
+  <!-- INFO PANEL 30% -->
+  <div class="info-panel">
+    <div class="panel-head">
+      <div class="ph-loc" id="ph-loc">NMC Chonburi · Factory Overview</div>
+      <div class="ph-name" id="ph-name">Factory Overview</div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('overview')">Overview</div>
+        <div class="tab" onclick="switchTab('machines')">Machines</div>
+        <div class="tab" onclick="switchTab('alerts')">Alerts<span class="tab-badge">2</span></div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <!-- OVERVIEW -->
+      <div class="tab-content active" id="tab-overview">
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-n" style="color:var(--accent2);">4</div><div class="stat-l">Buildings</div></div>
+          <div class="stat-box"><div class="stat-n" style="color:var(--warn);">1</div><div class="stat-l">Warning</div></div>
+          <div class="stat-box"><div class="stat-n" style="color:var(--danger);">1</div><div class="stat-l">Fault</div></div>
+        </div>
+        <div class="sec-lbl">Live Sensors</div>
+        <div class="scard ok"><div class="sc-left"><div class="sc-name">TEMPERATURE AVG</div><div class="sc-val">23.1<span class="sc-unit">°C</span></div></div><svg class="spark" viewBox="0 0 55 22"><polyline points="0,16 11,14 22,13 33,14 44,12 55,11" fill="none" stroke="rgba(0,255,157,0.5)" stroke-width="1.5"/></svg></div>
+        <div class="scard warn"><div class="sc-left"><div class="sc-name">PARTICLE COUNT</div><div class="sc-val warn">8,420<span class="sc-unit">p/m³</span></div></div><svg class="spark" viewBox="0 0 55 22"><polyline points="0,18 11,16 22,13 33,10 44,8 55,5" fill="none" stroke="rgba(255,184,0,0.6)" stroke-width="1.5"/></svg></div>
+        <div class="scard danger"><div class="sc-left"><div class="sc-name">DIFF. PRESSURE</div><div class="sc-val danger">3.2<span class="sc-unit">Pa</span></div></div><svg class="spark" viewBox="0 0 55 22"><polyline points="0,8 11,9 22,12 33,15 44,17 55,20" fill="none" stroke="rgba(255,69,96,0.6)" stroke-width="1.5"/></svg></div>
+        <div class="scard ok"><div class="sc-left"><div class="sc-name">POWER TOTAL</div><div class="sc-val">142<span class="sc-unit">kW</span></div></div><svg class="spark" viewBox="0 0 55 22"><polyline points="0,13 11,12 22,13 33,11 44,12 55,12" fill="none" stroke="rgba(0,200,255,0.5)" stroke-width="1.5"/></svg></div>
+      </div>
+      <!-- MACHINES -->
+      <div class="tab-content" id="tab-machines">
+        <div class="sec-lbl">Machines — Current View</div>
+        <div class="mitem" onclick="clickMachine('CNC-001','CNC Machining #001','⚙️','● RUNNING')"><div class="mi-dot d-online"></div><div class="mi-info"><div class="mi-name">CNC Machining #001</div><div class="mi-meta">CNC-001 · OEE 87%</div></div><span class="mtag mt-run">RUN</span></div>
+        <div class="mitem" onclick="clickMachine('ROBOT-02','Robot Arm #002','🦾','⚠ WARNING')"><div class="mi-dot d-warn"></div><div class="mi-info"><div class="mi-name">Robot Arm #002</div><div class="mi-meta">ROBOT-02 · Vibration high</div></div><span class="mtag mt-run">RUN</span></div>
+        <div class="mitem" onclick="clickMachine('PUMP-03','Coolant Pump #003','🔧','🔴 FAULT')"><div class="mi-dot d-fault"></div><div class="mi-info"><div class="mi-name">Coolant Pump #003</div><div class="mi-meta">PUMP-03 · Pressure fault</div></div><span class="mtag mt-fault">FAULT</span></div>
+        <div class="mitem"><div class="mi-dot d-online"></div><div class="mi-info"><div class="mi-name">Conveyor Belt #004</div><div class="mi-meta">CONV-04 · 1.2 m/s</div></div><span class="mtag mt-run">RUN</span></div>
+        <div class="mitem"><div class="mi-dot d-idle"></div><div class="mi-info"><div class="mi-name">Inspection Camera #005</div><div class="mi-meta">CAM-05 · Standby</div></div><span class="mtag mt-idle">IDLE</span></div>
+      </div>
+      <!-- ALERTS -->
+      <div class="tab-content" id="tab-alerts">
+        <div class="sec-lbl">Active Alerts</div>
+        <div class="aitem crit"><div class="ai-icon">🔴</div><div class="ai-body"><div class="ai-title">Coolant Pump Pressure Drop</div><div class="ai-meta">PUMP-03 · 3.2 Pa · 2 min ago</div></div><span class="abadge ab-crit">CRIT</span></div>
+        <div class="aitem wrn"><div class="ai-icon">⚠️</div><div class="ai-body"><div class="ai-title">Robot Arm Vibration High</div><div class="ai-meta">ROBOT-02 · 78 Hz · 15 min ago</div></div><span class="abadge ab-warn">WARN</span></div>
+        <div class="sec-lbl" style="margin-top:4px;">Resolved</div>
+        <div class="aitem inf" style="opacity:0.55;"><div class="ai-icon">ℹ️</div><div class="ai-body"><div class="ai-title">Temperature Spike</div><div class="ai-meta">CR-01 · normalized · 1h ago</div></div><span class="abadge ab-res">OK</span></div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <div class="sbi"><div class="sd sd-g"></div>IoT Connected</div>
+      <div class="sbi"><div class="sd sd-b"></div>Twin Synced</div>
+      <div class="sbi"><div class="sd sd-y"></div>2 Alerts</div>
+      <div class="sbi" style="margin-left:auto;" id="clock">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentLevel = 0;
+let maxUnlocked = 0;
+
+const levelNames = ['Factory Overview','อาคาร A — Production','ชั้น 1 — Production Floor','Clean Room CR-01','CNC-001'];
+const levelLocs = ['NMC Chonburi · Factory Overview','NMC Chonburi · อาคาร A','อาคาร A · ชั้น 1','อาคาร A · ชั้น 1 · CR-01','CR-01 · อาคาร A'];
+
+function goLevel(n) {
+  if (n > maxUnlocked) return;
+  if (n === currentLevel) return;
+  document.getElementById('lv'+currentLevel).classList.remove('active');
+  setTimeout(() => document.getElementById('lv'+n).classList.add('active'), 60);
+  currentLevel = n;
+  updateBC(n);
+  for(let i=0;i<5;i++) document.getElementById('btn'+i).className='vbtn'+(i===n?' cur':'');
+  document.getElementById('ph-name').textContent = levelNames[n];
+  document.getElementById('ph-loc').textContent = levelLocs[n];
+}
+
+function updateBC(n) {
+  for(let i=0;i<5;i++){
+    const el = document.getElementById('bc'+i);
+    if(i < n) { el.className='bc-item'; el.style.cursor='pointer'; }
+    else if(i===n) { el.className='bc-item active'; el.style.cursor='default'; }
+    else { el.className='bc-item unvisited'; el.style.cursor='default'; }
+  }
+}
+
+function unlockAndGo(n) {
+  if(n > maxUnlocked) maxUnlocked = n;
+  goLevel(n);
+}
+
+function clickBuilding(code, name) {
+  document.getElementById('lv1-name').textContent = name;
+  document.getElementById('bct1').textContent = 'อาคาร '+code;
+  levelNames[1] = name;
+  levelLocs[1] = 'NMC Chonburi · ' + name;
+  unlockAndGo(1);
+}
+
+function clickFloor(floor, desc) {
+  document.getElementById('lv2-name').textContent = floor + ' — ' + desc;
+  document.getElementById('bct2').textContent = floor;
+  levelNames[2] = floor + ' — ' + desc;
+  levelLocs[2] = 'อาคาร A · ' + floor;
+  unlockAndGo(2);
+}
+
+function clickRoom(name) {
+  document.getElementById('lv3-name').textContent = name;
+  document.getElementById('bct3').textContent = name;
+  levelNames[3] = name;
+  levelLocs[3] = 'ชั้น 1 · ' + name;
+  unlockAndGo(3);
+}
+
+function clickMachine(id, name, icon, badge) {
+  document.getElementById('lv4-name').textContent = name;
+  document.getElementById('lv4-icon').textContent = icon;
+  document.getElementById('lv4-id').textContent = id;
+  document.getElementById('lv4-mname').innerHTML = name.replace(' #','<br>#');
+  document.getElementById('lv4-badge').textContent = badge;
+  document.getElementById('lv4-sub').textContent = 'ID: '+id+' · CR-01 · อาคาร A ชั้น 1';
+  document.getElementById('bct4').textContent = id;
+  levelNames[4] = name;
+  levelLocs[4] = 'CR-01 · ' + id;
+  unlockAndGo(4);
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['overview','machines','alerts'][i]===name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id==='tab-'+name));
+}
+
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8);
+}, 1000);
+document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8);
+</script>
+</body>
+</html>

@@ -1,0 +1,1218 @@
+/* ============================================================
+   Smart Factory 3D — Overview Page Industrial Theme
+   Scoped under .ov-theme class
+   ============================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+.ov-theme {
+  --ov-bg: #070d18;
+  --ov-surface: #0b1520;
+  --ov-surface2: #0f1d2e;
+  --ov-surface3: #142338;
+  --ov-border: #192e48;
+  --ov-border2: #1e3c60;
+  --ov-accent: #00c8ff;
+  --ov-accent-dim: rgba(0, 200, 255, 0.1);
+  --ov-accent2: #00ff9d;
+  --ov-accent2-dim: rgba(0, 255, 157, 0.08);
+  --ov-warn: #ffb800;
+  --ov-warn-dim: rgba(255, 184, 0, 0.1);
+  --ov-danger: #ff4560;
+  --ov-danger-dim: rgba(255, 69, 96, 0.1);
+  --ov-text: #e0ecf7;
+  --ov-text-dim: #7fa3c2;
+  --ov-text-muted: #4a6d8a;
+  --ov-online: #00ff9d;
+
+  font-family: "Barlow", sans-serif;
+  background: var(--ov-bg);
+  color: var(--ov-text);
+}
+
+/* ── Animations ── */
+@keyframes ov-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes ov-fadepulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes ov-fault-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 69, 96, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(255, 69, 96, 0.12);
+  }
+}
+@keyframes ov-fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Breadcrumb Bar ── */
+.ov-breadcrumb {
+  height: 42px;
+  background: var(--ov-surface2);
+  border-bottom: 1px solid var(--ov-border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 0;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.ov-breadcrumb::-webkit-scrollbar {
+  display: none;
+}
+
+.ov-bc-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--ov-text-dim);
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.ov-bc-item:hover:not(.ov-bc-unvisited) {
+  color: var(--ov-text);
+  background: var(--ov-surface3);
+}
+.ov-bc-item.ov-bc-active {
+  color: var(--ov-accent);
+  background: var(--ov-accent-dim);
+  cursor: default;
+}
+.ov-bc-item.ov-bc-unvisited {
+  color: var(--ov-text-muted);
+  cursor: default;
+}
+.ov-bc-arrow {
+  color: var(--ov-text-dim);
+  font-size: 15px;
+  padding: 0 2px;
+  user-select: none;
+}
+.ov-bc-lv {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ov-text-dim);
+}
+
+/* ── Main Split ── */
+.ov-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.ov-viewer {
+  flex: 0 0 70%;
+  position: relative;
+  overflow: hidden;
+  background: var(--ov-bg);
+}
+.ov-panel {
+  flex: 0 0 30%;
+  background: var(--ov-surface);
+  border-left: 1px solid var(--ov-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Level Views ── */
+.ov-level {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ov-level.ov-level-active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.ov-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Viewer labels */
+.ov-vlabel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+}
+.ov-vtag {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ov-accent);
+  background: rgba(0, 200, 255, 0.08);
+  border: 1px solid rgba(0, 200, 255, 0.18);
+  padding: 3px 10px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+.ov-vname {
+  font-family: "Barlow", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ov-text);
+  line-height: 1;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9);
+}
+.ov-vsub {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  margin-top: 4px;
+}
+.ov-mt-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  background: rgba(7, 13, 24, 0.8);
+  border: 1px solid var(--ov-border);
+  padding: 5px 12px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ov-live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ov-online);
+  box-shadow: 0 0 5px var(--ov-online);
+  animation: ov-blink 1.5s ease infinite;
+}
+
+/* ── LV0: Factory Aerial ── */
+.ov-aerial {
+  position: relative;
+  width: 90%;
+  max-width: 700px;
+  aspect-ratio: 680/430;
+}
+.ov-aerial-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #070d18, #0a1525);
+  border: 1px solid #1a3050;
+  border-radius: 6px;
+}
+.ov-road {
+  position: absolute;
+  background: #0c1a2a;
+}
+.ov-road-h {
+  height: 16px;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #1a3050;
+  border-bottom: 1px solid #1a3050;
+}
+.ov-road-v {
+  width: 16px;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid #1a3050;
+  border-right: 1px solid #1a3050;
+}
+.ov-bldg {
+  position: absolute;
+  border-radius: 4px;
+  border: 1px solid #1e3a5f;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0f1e32, #0c1828);
+}
+.ov-bldg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transition: background 0.2s;
+}
+.ov-bldg:hover {
+  border-color: var(--ov-accent);
+  box-shadow: 0 0 24px rgba(0, 200, 255, 0.15);
+  transform: scale(1.02);
+}
+.ov-bldg:hover::before {
+  background: rgba(0, 200, 255, 0.05);
+}
+.ov-roof-lines {
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(0, 200, 255, 0.07);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.ov-bldg-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ov-text-dim);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.ov-bldg-sub {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.ov-bldg-st {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  position: relative;
+  z-index: 1;
+}
+.ov-st-ok {
+  background: var(--ov-accent2-dim);
+  color: var(--ov-accent2);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+}
+.ov-st-warn {
+  background: var(--ov-warn-dim);
+  color: var(--ov-warn);
+  border: 1px solid rgba(255, 184, 0, 0.2);
+}
+.ov-click-hint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  animation: ov-fadepulse 2s ease infinite;
+}
+
+/* ── LV1: Building / Floor Stack ── */
+.ov-floor-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  width: 520px;
+  max-width: 90%;
+}
+.ov-floor-card {
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border);
+  border-radius: 6px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.ov-floor-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--ov-border2);
+  transition: background 0.2s;
+}
+.ov-floor-card:hover {
+  border-color: var(--ov-accent);
+  background: var(--ov-accent-dim);
+  transform: translateX(4px);
+}
+.ov-floor-card:hover::before {
+  background: var(--ov-accent);
+}
+.ov-floor-num {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--ov-text-dim);
+  line-height: 1;
+  width: 42px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.ov-floor-card:hover .ov-floor-num {
+  color: var(--ov-accent);
+}
+.ov-floor-info {
+  flex: 1;
+}
+.ov-floor-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ov-text);
+  margin-bottom: 3px;
+}
+.ov-floor-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+}
+.ov-floor-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+.ov-ftag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+.ov-ftag-danger {
+  background: var(--ov-danger-dim);
+  color: var(--ov-danger);
+  border: 1px solid rgba(255, 69, 96, 0.2);
+}
+.ov-ftag-warn {
+  background: var(--ov-warn-dim);
+  color: var(--ov-warn);
+  border: 1px solid rgba(255, 184, 0, 0.2);
+}
+.ov-ftag-ok {
+  background: var(--ov-accent2-dim);
+  color: var(--ov-accent2);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+}
+.ov-ftag-accent {
+  background: var(--ov-accent-dim);
+  color: var(--ov-accent);
+  border: 1px solid rgba(0, 200, 255, 0.2);
+}
+.ov-floor-arr {
+  color: var(--ov-text-dim);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* ── LV2: Floor Plan ── */
+.ov-fp-scene {
+  position: relative;
+  width: 90%;
+  max-width: 650px;
+  aspect-ratio: 640/400;
+}
+.ov-fp-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 200, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+.ov-corridor {
+  position: absolute;
+  background: rgba(0, 200, 255, 0.02);
+  border: 1px dashed rgba(0, 200, 255, 0.07);
+}
+.ov-room {
+  position: absolute;
+  border-radius: 3px;
+  border: 1px solid var(--ov-border2);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: var(--ov-surface2);
+}
+.ov-room:hover {
+  border-color: var(--ov-accent);
+  background: var(--ov-accent-dim);
+  z-index: 5;
+}
+.ov-room.ov-room-warn {
+  border-color: var(--ov-warn);
+  background: var(--ov-warn-dim);
+}
+.ov-room.ov-room-fault {
+  border-color: var(--ov-danger);
+  background: var(--ov-danger-dim);
+  animation: ov-fault-pulse 2s ease infinite;
+}
+.ov-room-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ov-text-dim);
+  text-align: center;
+}
+.ov-room:hover .ov-room-label {
+  color: var(--ov-accent);
+}
+.ov-room.ov-room-warn .ov-room-label {
+  color: var(--ov-warn);
+}
+.ov-room.ov-room-fault .ov-room-label {
+  color: var(--ov-danger);
+}
+.ov-room-sub {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  text-align: center;
+}
+.ov-room-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+.ov-compass {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  border: 1px solid var(--ov-border);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 13, 24, 0.8);
+}
+
+/* ── LV3: Room 3D ── */
+.ov-matterport-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+.ov-perspective-room {
+  width: 560px;
+  max-width: 90%;
+  height: 310px;
+  position: relative;
+}
+.ov-wall-back {
+  position: absolute;
+  top: 30px;
+  left: 80px;
+  right: 80px;
+  height: 200px;
+  background: linear-gradient(180deg, #0c1b2e, #091525);
+  border: 1px solid #1a3050;
+}
+.ov-wall-left {
+  position: absolute;
+  top: 55px;
+  left: 0;
+  width: 80px;
+  height: 200px;
+  background: linear-gradient(90deg, #091525, #0c1b2e);
+  border: 1px solid #162840;
+  clip-path: polygon(100% 0, 100% 100%, 0 80%, 0 20%);
+}
+.ov-wall-right {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 80px;
+  height: 200px;
+  background: linear-gradient(270deg, #091525, #0c1b2e);
+  border: 1px solid #162840;
+  clip-path: polygon(0 0, 0 100%, 100% 80%, 100% 20%);
+}
+.ov-floor-3d {
+  position: absolute;
+  bottom: 0;
+  left: 60px;
+  right: 60px;
+  height: 155px;
+  background: linear-gradient(180deg, #0d1e32, #091525);
+  border: 1px solid #1a3050;
+  transform: rotateX(45deg);
+  transform-origin: bottom center;
+  background-image:
+    linear-gradient(rgba(0, 200, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.ov-machine-3d {
+  position: absolute;
+  border-radius: 4px;
+  border: 1px solid var(--ov-border2);
+  background: var(--ov-surface2);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.ov-machine-3d:hover {
+  border-color: var(--ov-accent);
+  box-shadow: 0 0 16px rgba(0, 200, 255, 0.2);
+}
+.ov-machine-3d.ov-m-fault {
+  border-color: var(--ov-danger);
+  animation: ov-fault-pulse 1.5s ease infinite;
+}
+.ov-machine-3d.ov-m-warn {
+  border-color: var(--ov-warn);
+}
+.ov-m3d-icon {
+  font-size: 24px;
+}
+.ov-m3d-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: var(--ov-text-dim);
+  text-align: center;
+}
+.ov-m3d-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+.ov-nav-arrows {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+.ov-nav-arr {
+  width: 36px;
+  height: 36px;
+  background: rgba(7, 13, 24, 0.85);
+  border: 1px solid var(--ov-border2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--ov-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  backdrop-filter: blur(6px);
+}
+.ov-nav-arr:hover {
+  border-color: var(--ov-accent);
+  color: var(--ov-accent);
+}
+
+/* ── LV4: Machine Detail ── */
+.ov-machine-detail {
+  position: relative;
+  width: 90%;
+  max-width: 640px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.ov-machine-box {
+  width: 220px;
+  height: 300px;
+  flex-shrink: 0;
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border2);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.ov-machine-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ov-accent2),
+    transparent
+  );
+}
+.ov-m-big-icon {
+  font-size: 52px;
+}
+.ov-m-id {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--ov-accent);
+  letter-spacing: 0.12em;
+}
+.ov-m-name {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ov-text);
+  text-align: center;
+  line-height: 1.2;
+}
+.ov-m-badge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  background: var(--ov-accent2-dim);
+  color: var(--ov-accent2);
+  border: 1px solid rgba(0, 255, 157, 0.25);
+  animation: ov-blink 2s ease infinite;
+}
+.ov-m-badge.ov-m-badge-warn {
+  background: var(--ov-warn-dim);
+  color: var(--ov-warn);
+  border-color: rgba(255, 184, 0, 0.25);
+}
+.ov-m-badge.ov-m-badge-fault {
+  background: var(--ov-danger-dim);
+  color: var(--ov-danger);
+  border-color: rgba(255, 69, 96, 0.25);
+}
+.ov-m-badge.ov-m-badge-idle {
+  background: rgba(78, 111, 144, 0.1);
+  color: var(--ov-text-dim);
+  border-color: var(--ov-border);
+  animation: none;
+}
+
+.ov-gauges {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ov-gauge {
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border);
+  border-radius: 6px;
+  padding: 12px;
+}
+.ov-g-name {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.ov-g-val {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ov-text);
+}
+.ov-g-val.ov-g-ok {
+  color: var(--ov-accent2);
+}
+.ov-g-val.ov-g-warn {
+  color: var(--ov-warn);
+}
+.ov-g-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ov-text-dim);
+  margin-left: 2px;
+}
+.ov-g-bar-wrap {
+  margin-top: 7px;
+  height: 3px;
+  background: var(--ov-surface3);
+  border-radius: 2px;
+}
+.ov-g-bar {
+  height: 100%;
+  border-radius: 2px;
+}
+.ov-bar-ok {
+  background: var(--ov-accent2);
+}
+.ov-bar-warn {
+  background: var(--ov-warn);
+}
+.ov-bar-accent {
+  background: var(--ov-accent);
+}
+
+/* ── Level Buttons ── */
+.ov-viewer-btns {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+.ov-vbtn {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--ov-border2);
+  background: rgba(7, 13, 24, 0.88);
+  color: var(--ov-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+.ov-vbtn:hover {
+  border-color: var(--ov-accent);
+  color: var(--ov-accent);
+  background: var(--ov-accent-dim);
+}
+.ov-vbtn.ov-vbtn-cur {
+  border-color: var(--ov-accent);
+  color: var(--ov-accent);
+  background: var(--ov-accent-dim);
+}
+
+/* ── Info Panel ── */
+.ov-panel-head {
+  padding: 12px 14px 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ov-border);
+}
+.ov-ph-loc {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+.ov-ph-name {
+  font-family: "Barlow", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ov-text);
+  margin-bottom: 10px;
+}
+
+.ov-tabs {
+  display: flex;
+  gap: 0;
+}
+.ov-tab {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: var(--ov-text-dim);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.ov-tab:hover {
+  color: var(--ov-text);
+}
+.ov-tab.ov-tab-active {
+  color: var(--ov-accent);
+  border-bottom-color: var(--ov-accent);
+}
+.ov-tab-badge {
+  background: var(--ov-danger-dim);
+  color: var(--ov-danger);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 3px;
+}
+
+.ov-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ov-panel-body::-webkit-scrollbar {
+  width: 3px;
+}
+.ov-panel-body::-webkit-scrollbar-thumb {
+  background: var(--ov-border2);
+  border-radius: 2px;
+}
+
+.ov-tab-content {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.ov-tab-content.ov-tab-content-active {
+  display: flex;
+  animation: ov-fadeUp 0.2s ease both;
+}
+
+.ov-sec-lbl {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ov-text-dim);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ov-border);
+}
+
+/* Stats Row */
+.ov-stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+.ov-stat-box {
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border);
+  border-radius: 5px;
+  padding: 8px;
+  text-align: center;
+}
+.ov-stat-n {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.ov-stat-l {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: var(--ov-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Sensor Cards */
+.ov-scard {
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border);
+  border-radius: 5px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ov-scard.ov-scard-warn {
+  border-left: 3px solid var(--ov-warn);
+}
+.ov-scard.ov-scard-danger {
+  border-left: 3px solid var(--ov-danger);
+}
+.ov-scard.ov-scard-ok {
+  border-left: 3px solid var(--ov-accent2);
+}
+.ov-sc-left {
+  flex: 1;
+  min-width: 0;
+}
+.ov-sc-name {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+.ov-sc-val {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+.ov-sc-val.ov-sc-val-warn {
+  color: var(--ov-warn);
+}
+.ov-sc-val.ov-sc-val-danger {
+  color: var(--ov-danger);
+}
+.ov-sc-unit {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ov-text-dim);
+  margin-left: 1px;
+}
+
+/* Machine Items */
+.ov-mitem {
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border);
+  border-radius: 5px;
+  padding: 9px 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ov-mitem:hover {
+  border-color: var(--ov-accent);
+  background: var(--ov-accent-dim);
+}
+.ov-mi-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ov-d-online {
+  background: var(--ov-online);
+  box-shadow: 0 0 5px var(--ov-online);
+  animation: ov-blink 2s ease infinite;
+}
+.ov-d-warn {
+  background: var(--ov-warn);
+  box-shadow: 0 0 5px var(--ov-warn);
+}
+.ov-d-fault {
+  background: var(--ov-danger);
+  box-shadow: 0 0 5px var(--ov-danger);
+}
+.ov-d-idle {
+  background: var(--ov-text-muted);
+}
+.ov-mi-info {
+  flex: 1;
+  min-width: 0;
+}
+.ov-mi-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ov-text);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-mi-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+}
+.ov-mtag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ov-mt-run {
+  background: var(--ov-accent2-dim);
+  color: var(--ov-accent2);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+}
+.ov-mt-idle {
+  background: rgba(78, 111, 144, 0.1);
+  color: var(--ov-text-dim);
+  border: 1px solid var(--ov-border);
+}
+.ov-mt-fault {
+  background: var(--ov-danger-dim);
+  color: var(--ov-danger);
+  border: 1px solid rgba(255, 69, 96, 0.2);
+}
+
+/* Alert Items */
+.ov-aitem {
+  background: var(--ov-surface2);
+  border: 1px solid var(--ov-border);
+  border-radius: 5px;
+  padding: 9px 11px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.ov-aitem.ov-aitem-crit {
+  border-left: 3px solid var(--ov-danger);
+}
+.ov-aitem.ov-aitem-warn {
+  border-left: 3px solid var(--ov-warn);
+}
+.ov-aitem.ov-aitem-info {
+  border-left: 3px solid var(--ov-accent);
+}
+.ov-ai-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ov-ai-body {
+  flex: 1;
+  min-width: 0;
+}
+.ov-ai-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ov-text);
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+.ov-ai-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+}
+.ov-abadge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ov-ab-crit {
+  background: var(--ov-danger-dim);
+  color: var(--ov-danger);
+  border: 1px solid rgba(255, 69, 96, 0.25);
+}
+.ov-ab-warn {
+  background: var(--ov-warn-dim);
+  color: var(--ov-warn);
+  border: 1px solid rgba(255, 184, 0, 0.25);
+}
+.ov-ab-res {
+  background: var(--ov-accent2-dim);
+  color: var(--ov-accent2);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+}
+
+/* ── Status Bar ── */
+.ov-statusbar {
+  height: 26px;
+  background: var(--ov-surface2);
+  border-top: 1px solid var(--ov-border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.ov-sbi {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ov-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ov-sd {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.ov-sd-g {
+  background: var(--ov-online);
+  box-shadow: 0 0 4px var(--ov-online);
+}
+.ov-sd-y {
+  background: var(--ov-warn);
+}
+.ov-sd-b {
+  background: var(--ov-accent);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .ov-main {
+    flex-direction: column;
+  }
+  .ov-viewer {
+    flex: 0 0 60%;
+  }
+  .ov-panel {
+    flex: 1;
+  }
+  .ov-machine-detail {
+    flex-direction: column;
+  }
+  .ov-machine-box {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 16px;
+  }
+}

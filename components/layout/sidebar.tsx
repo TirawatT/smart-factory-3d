@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Box,
+  Building2,
   ChevronLeft,
   ChevronRight,
   Cpu,
@@ -20,6 +21,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
+  {
+    label: "Overview",
+    href: "/overview",
+    icon: Building2,
+  },
   {
     label: "Dashboard",
     href: "/dashboard",
