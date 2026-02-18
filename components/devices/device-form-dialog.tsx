@@ -17,62 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { ZONES } from "@/lib/mock-data";
-import { Device, DeviceFormData, DeviceType, SensorType } from "@/lib/types";
+import { Device, DeviceStatus, DeviceType } from "@/lib/types";
 import { useDeviceStore } from "@/stores/device-store";
-import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
-
-const deviceTypes: DeviceType[] = [
-  "temperature",
-  "humidity",
-  "pressure",
-  "vibration",
-  "power",
-  "flow",
-  "level",
-  "gas",
-];
-
-const sensorTypes: SensorType[] = [
-  "temperature",
-  "humidity",
-  "pressure",
-  "vibration",
-  "power",
-  "flow",
-  "level",
-  "gas",
-  "rpm",
-  "voltage",
-  "current",
-];
-
-interface SensorFormRow {
-  name: string;
-  type: SensorType;
-  unit: string;
-  min: number;
-  max: number;
-  thresholdWarning: number;
-  thresholdCritical: number;
-}
-
-const emptySensor: SensorFormRow = {
-  name: "",
-  type: "temperature",
-  unit: "°C",
-  min: 0,
-  max: 100,
-  thresholdWarning: 70,
-  thresholdCritical: 90,
-};
+import { useEffect, useState } from "react";
 
 interface DeviceFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editDevice?: Device | null;
+  editDevice: Device | null;
 }
 
 export function DeviceFormDialog({
@@ -83,329 +36,198 @@ export function DeviceFormDialog({
   const addDevice = useDeviceStore((s) => s.addDevice);
   const updateDevice = useDeviceStore((s) => s.updateDevice);
 
-  const [name, setName] = useState(editDevice?.name ?? "");
-  const [type, setType] = useState<DeviceType>(
-    editDevice?.type ?? "temperature",
-  );
-  const [description, setDescription] = useState(editDevice?.description ?? "");
-  const [location, setLocation] = useState(editDevice?.location ?? "");
-  const [zone, setZone] = useState(editDevice?.zone ?? ZONES[0]);
-  const [tagId, setTagId] = useState(editDevice?.matterportTagId ?? "");
-  const [sensors, setSensors] = useState<SensorFormRow[]>(
-    editDevice
-      ? editDevice.sensors.map((s) => ({
-          name: s.name,
-          type: s.type,
-          unit: s.unit,
-          min: s.min,
-          max: s.max,
-          thresholdWarning: s.thresholdWarning,
-          thresholdCritical: s.thresholdCritical,
-        }))
-      : [{ ...emptySensor }],
-  );
+  const [name, setName] = useState("");
+  const [type, setType] = useState<DeviceType>("temperature");
+  const [location, setLocation] = useState("");
+  const [zone, setZone] = useState("");
+  const [status, setStatus] = useState<DeviceStatus>("online");
 
-  // Reset form when dialog opens with different device
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      // Reset on close
+  useEffect(() => {
+    if (editDevice) {
+      setName(editDevice.name);
+      setType(editDevice.type);
+      setLocation(editDevice.location);
+      setZone(editDevice.zone);
+      setStatus(editDevice.status);
+    } else {
       setName("");
       setType("temperature");
-      setDescription("");
       setLocation("");
-      setZone(ZONES[0]);
-      setTagId("");
-      setSensors([{ ...emptySensor }]);
+      setZone("");
+      setStatus("online");
     }
-    onOpenChange(isOpen);
-  };
+  }, [editDevice, open]);
 
-  const addSensorRow = () => setSensors([...sensors, { ...emptySensor }]);
-
-  const removeSensorRow = (index: number) =>
-    setSensors(sensors.filter((_, i) => i !== index));
-
-  const updateSensorRow = (
-    index: number,
-    field: keyof SensorFormRow,
-    value: string | number,
-  ) => {
-    const updated = [...sensors];
-    (updated[index] as any)[field] = value;
-    setSensors(updated);
-  };
-
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-
-    const data: DeviceFormData = {
-      name: name.trim(),
-      type,
-      description: description.trim(),
-      location: location.trim(),
-      zone,
-      matterportTagId: tagId.trim(),
-      sensors: sensors
-        .filter((s) => s.name.trim())
-        .map((s) => ({
-          name: s.name.trim(),
-          type: s.type,
-          unit: s.unit,
-          min: Number(s.min),
-          max: Number(s.max),
-          thresholdWarning: Number(s.thresholdWarning),
-          thresholdCritical: Number(s.thresholdCritical),
-        })),
-    };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !type || !location || !zone) return;
 
     if (editDevice) {
-      updateDevice(editDevice.id, data);
+      updateDevice(editDevice.id, { name, type, location, zone });
+      if (editDevice.status !== status) {
+        useDeviceStore.getState().updateDeviceStatus(editDevice.id, status);
+      }
     } else {
-      addDevice(data);
+      addDevice({
+        name,
+        type,
+        description: "",
+        location,
+        zone,
+        matterportTagId: "",
+        sensors: [],
+      });
     }
-
-    handleOpenChange(false);
+    onOpenChange(false);
   };
 
+  const inputClasses =
+    "border-[#192e48] bg-[#0b1520] text-[#e0ecf7] placeholder:text-[#4a6d8a] focus:border-[#00c8ff]/50";
+  const labelClasses = "text-xs font-medium uppercase tracking-wider";
+  const selectItemClasses =
+    "text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]";
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="border-[#192e48] bg-[#0f1d2e] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {editDevice ? "Edit Device" : "Add New Device"}
+          <DialogTitle style={{ color: "#e0ecf7" }}>
+            {editDevice ? "Edit Device" : "Add Device"}
           </DialogTitle>
         </DialogHeader>
-
-        <div className="grid gap-4 py-4">
-          {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Device Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Temperature Sensor A1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
-              <Select
-                value={type}
-                onValueChange={(v) => setType(v as DeviceType)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {deviceTypes.map((t) => (
-                    <SelectItem key={t} value={t} className="capitalize">
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="desc">Description</Label>
+            <Label
+              htmlFor="name"
+              className={labelClasses}
+              style={{ color: "#7fa3c2" }}
+            >
+              Name
+            </Label>
             <Input
-              id="desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description..."
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Device name"
+              required
+              className={inputClasses}
             />
           </div>
-
+          <div className="space-y-2">
+            <Label
+              htmlFor="type"
+              className={labelClasses}
+              style={{ color: "#7fa3c2" }}
+            >
+              Type
+            </Label>
+            <Select
+              value={type}
+              onValueChange={(v) => setType(v as DeviceType)}
+            >
+              <SelectTrigger className={inputClasses}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-[#192e48] bg-[#0f1d2e]">
+                {(
+                  [
+                    "temperature",
+                    "humidity",
+                    "pressure",
+                    "vibration",
+                    "power",
+                    "flow",
+                    "level",
+                    "gas",
+                  ] as DeviceType[]
+                ).map((t) => (
+                  <SelectItem key={t} value={t} className={selectItemClasses}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="location"
+              className={labelClasses}
+              style={{ color: "#7fa3c2" }}
+            >
+              Location
+            </Label>
+            <Input
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Building A, Floor 2"
+              required
+              className={inputClasses}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Assembly Line 1, Column 3"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Zone</Label>
+              <Label className={labelClasses} style={{ color: "#7fa3c2" }}>
+                Zone
+              </Label>
               <Select value={zone} onValueChange={setZone}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className={inputClasses}>
+                  <SelectValue placeholder="Select zone" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="border-[#192e48] bg-[#0f1d2e]">
                   {ZONES.map((z) => (
-                    <SelectItem key={z} value={z}>
+                    <SelectItem key={z} value={z} className={selectItemClasses}>
                       {z}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tagId">Matterport Tag ID</Label>
-            <Input
-              id="tagId"
-              value={tagId}
-              onChange={(e) => setTagId(e.target.value)}
-              placeholder="Tag ID for 3D model pin mapping"
-            />
-          </div>
-
-          <Separator />
-
-          {/* Sensors */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <Label className="text-sm font-semibold">Sensors</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addSensorRow}
+            <div className="space-y-2">
+              <Label className={labelClasses} style={{ color: "#7fa3c2" }}>
+                Status
+              </Label>
+              <Select
+                value={status}
+                onValueChange={(v) => setStatus(v as DeviceStatus)}
               >
-                <Plus className="mr-1 h-3 w-3" /> Add Sensor
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {sensors.map((sensor, i) => (
-                <div
-                  key={i}
-                  className="rounded-md border bg-muted/30 p-3 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Sensor #{i + 1}
-                    </span>
-                    {sensors.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive"
-                        onClick={() => removeSensorRow(i)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <Label className="text-[10px]">Name</Label>
-                      <Input
-                        value={sensor.name}
-                        onChange={(e) =>
-                          updateSensorRow(i, "name", e.target.value)
-                        }
-                        className="h-8 text-xs"
-                        placeholder="Sensor name"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Type</Label>
-                      <Select
-                        value={sensor.type}
-                        onValueChange={(v) => updateSensorRow(i, "type", v)}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sensorTypes.map((t) => (
-                            <SelectItem
-                              key={t}
-                              value={t}
-                              className="capitalize text-xs"
-                            >
-                              {t}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Unit</Label>
-                      <Input
-                        value={sensor.unit}
-                        onChange={(e) =>
-                          updateSensorRow(i, "unit", e.target.value)
-                        }
-                        className="h-8 text-xs"
-                        placeholder="°C, %, bar..."
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <div>
-                      <Label className="text-[10px]">Min</Label>
-                      <Input
-                        type="number"
-                        value={sensor.min}
-                        onChange={(e) =>
-                          updateSensorRow(i, "min", Number(e.target.value))
-                        }
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Max</Label>
-                      <Input
-                        type="number"
-                        value={sensor.max}
-                        onChange={(e) =>
-                          updateSensorRow(i, "max", Number(e.target.value))
-                        }
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Warn</Label>
-                      <Input
-                        type="number"
-                        value={sensor.thresholdWarning}
-                        onChange={(e) =>
-                          updateSensorRow(
-                            i,
-                            "thresholdWarning",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Critical</Label>
-                      <Input
-                        type="number"
-                        value={sensor.thresholdCritical}
-                        onChange={(e) =>
-                          updateSensorRow(
-                            i,
-                            "thresholdCritical",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="h-8 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                <SelectTrigger className={inputClasses}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-[#192e48] bg-[#0f1d2e]">
+                  <SelectItem value="online" className={selectItemClasses}>
+                    Online
+                  </SelectItem>
+                  <SelectItem value="offline" className={selectItemClasses}>
+                    Offline
+                  </SelectItem>
+                  <SelectItem value="warning" className={selectItemClasses}>
+                    Warning
+                  </SelectItem>
+                  <SelectItem value="critical" className={selectItemClasses}>
+                    Critical
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!name.trim()}>
-            {editDevice ? "Save Changes" : "Add Device"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="border-[#192e48] bg-[#0b1520] text-[#7fa3c2] hover:bg-[#142338] hover:text-[#e0ecf7]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-[#00c8ff] text-[#070d18] hover:bg-[#00b0e0] font-semibold"
+            >
+              {editDevice ? "Save Changes" : "Add Device"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

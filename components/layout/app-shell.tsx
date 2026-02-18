@@ -18,7 +18,7 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen sf-grid-bg" style={{ background: "#070d18" }}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
       <main
         className={`transition-all duration-300 ${

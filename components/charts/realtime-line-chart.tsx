@@ -27,7 +27,7 @@ interface RealtimeLineChartProps {
 export function RealtimeLineChart({
   readings,
   unit = "",
-  color = "hsl(var(--primary))",
+  color = "#00c8ff",
   thresholdWarning,
   thresholdCritical,
   height = 200,
@@ -44,11 +44,18 @@ export function RealtimeLineChart({
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-        <p className="text-muted-foreground">
+      <div
+        className="rounded-md px-3 py-2 text-xs shadow-lg"
+        style={{
+          background: "#0f1d2e",
+          border: "1px solid #192e48",
+          color: "#e0ecf7",
+        }}
+      >
+        <p style={{ color: "#4a6d8a" }} className="sf-mono">
           {format(new Date(payload[0].payload.time), "HH:mm:ss")}
         </p>
-        <p className="font-semibold">
+        <p className="font-semibold sf-mono" style={{ color }}>
           {payload[0].value} {unit}
         </p>
       </div>
@@ -65,36 +72,50 @@ export function RealtimeLineChart({
             : { top: 5, right: 20, bottom: 5, left: 10 }
         }
       >
-        {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.1} />}
+        {showGrid && (
+          <CartesianGrid strokeDasharray="3 3" stroke="#192e48" opacity={0.5} />
+        )}
         <XAxis
           dataKey="time"
           tickFormatter={formatTime}
-          tick={{ fontSize: compact ? 9 : 11 }}
+          tick={{ fontSize: compact ? 9 : 11, fill: "#4a6d8a" }}
           interval="preserveStartEnd"
           minTickGap={40}
+          stroke="#192e48"
         />
         {!compact && (
           <YAxis
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: "#4a6d8a" }}
             width={45}
             tickFormatter={(v: number) => v.toFixed(1)}
+            stroke="#192e48"
           />
         )}
         <Tooltip content={<CustomTooltip />} />
         {thresholdWarning !== undefined && (
           <ReferenceLine
             y={thresholdWarning}
-            stroke="#f59e0b"
+            stroke="#ffb800"
             strokeDasharray="4 4"
-            label={compact ? undefined : { value: "Warning", fontSize: 10 }}
+            strokeOpacity={0.6}
+            label={
+              compact
+                ? undefined
+                : { value: "Warning", fontSize: 10, fill: "#ffb800" }
+            }
           />
         )}
         {thresholdCritical !== undefined && (
           <ReferenceLine
             y={thresholdCritical}
-            stroke="#ef4444"
+            stroke="#ff4560"
             strokeDasharray="4 4"
-            label={compact ? undefined : { value: "Critical", fontSize: 10 }}
+            strokeOpacity={0.6}
+            label={
+              compact
+                ? undefined
+                : { value: "Critical", fontSize: 10, fill: "#ff4560" }
+            }
           />
         )}
         <Line
@@ -104,6 +125,7 @@ export function RealtimeLineChart({
           strokeWidth={2}
           dot={false}
           isAnimationActive={false}
+          style={{ filter: `drop-shadow(0 0 4px ${color}40)` }}
         />
       </LineChart>
     </ResponsiveContainer>

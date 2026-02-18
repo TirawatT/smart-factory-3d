@@ -26,11 +26,11 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-const statusVariant: Record<DeviceStatus, string> = {
-  online: "bg-green-500/10 text-green-500 border-green-500/20",
-  offline: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  warning: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  critical: "bg-red-500/10 text-red-500 border-red-500/20",
+const statusConfig: Record<DeviceStatus, { color: string; bg: string }> = {
+  online: { color: "#00ff9d", bg: "rgba(0,255,157,0.1)" },
+  offline: { color: "#4a6d8a", bg: "rgba(74,109,138,0.1)" },
+  warning: { color: "#ffb800", bg: "rgba(255,184,0,0.1)" },
+  critical: { color: "#ff4560", bg: "rgba(255,69,96,0.1)" },
 };
 
 interface DeviceTableProps {
@@ -40,122 +40,193 @@ interface DeviceTableProps {
 
 export function DeviceTable({ devices, onEdit }: DeviceTableProps) {
   const deleteDevice = useDeviceStore((s) => s.deleteDevice);
-  const [deleteTarget, setDeleteTarget] = useState<Device | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteDevice(deleteId);
+      setDeleteId(null);
+    }
+  };
 
   return (
     <>
-      <div className="rounded-md border">
+      <div
+        className="rounded-lg overflow-hidden"
+        style={{ background: "#0b1520", border: "1px solid #192e48" }}
+      >
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Zone</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-center">Sensors</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="border-[#192e48] hover:bg-transparent">
+              <TableHead
+                className="text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Name
+              </TableHead>
+              <TableHead
+                className="text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Type
+              </TableHead>
+              <TableHead
+                className="text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Status
+              </TableHead>
+              <TableHead
+                className="text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Location
+              </TableHead>
+              <TableHead
+                className="text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Zone
+              </TableHead>
+              <TableHead
+                className="text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Sensors
+              </TableHead>
+              <TableHead
+                className="text-right text-xs uppercase tracking-wider"
+                style={{ color: "#4a6d8a" }}
+              >
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {devices.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  No devices found
-                </TableCell>
-              </TableRow>
-            ) : (
-              devices.map((device) => (
-                <TableRow key={device.id} className="group">
+            {devices.map((device) => {
+              const cfg = statusConfig[device.status];
+              return (
+                <TableRow
+                  key={device.id}
+                  className="border-[#192e48] hover:bg-[#142338] transition-colors"
+                >
                   <TableCell>
-                    <div>
-                      <Link
-                        href={`/devices/${device.id}`}
-                        className="font-medium hover:underline"
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full shrink-0"
+                        style={{
+                          background: cfg.color,
+                          boxShadow: `0 0 4px ${cfg.color}60`,
+                        }}
+                      />
+                      <span
+                        className="font-medium"
+                        style={{ color: "#e0ecf7" }}
                       >
                         {device.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {device.location}
-                      </p>
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="capitalize">
+                    <span
+                      className="text-xs sf-mono"
+                      style={{ color: "#7fa3c2" }}
+                    >
                       {device.type}
-                    </Badge>
+                    </span>
                   </TableCell>
-                  <TableCell className="text-sm">{device.zone}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={statusVariant[device.status]}
+                      className="border-0 text-[10px] uppercase sf-mono"
+                      style={{ background: cfg.bg, color: cfg.color }}
                     >
                       {device.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center">
-                    {device.sensors.length}
+                  <TableCell>
+                    <span className="text-xs" style={{ color: "#7fa3c2" }}>
+                      {device.location}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs" style={{ color: "#7fa3c2" }}>
+                      {device.zone}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className="text-xs sf-mono"
+                      style={{ color: "#00c8ff" }}
+                    >
+                      {device.sensors.length}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex justify-end gap-1">
                       <Button
+                        asChild
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
-                        asChild
+                        className="h-7 w-7 hover:bg-[#142338]"
                       >
                         <Link href={`/devices/${device.id}`}>
-                          <Eye className="h-4 w-4" />
+                          <Eye
+                            className="h-4 w-4"
+                            style={{ color: "#00c8ff" }}
+                          />
                         </Link>
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-7 w-7 hover:bg-[#142338]"
                         onClick={() => onEdit(device)}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil
+                          className="h-4 w-4"
+                          style={{ color: "#7fa3c2" }}
+                        />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => setDeleteTarget(device)}
+                        className="h-7 w-7 hover:bg-[rgba(255,69,96,0.1)]"
+                        onClick={() => setDeleteId(device.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2
+                          className="h-4 w-4"
+                          style={{ color: "#ff4560" }}
+                        />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
       {/* Delete Confirmation */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent className="border-[#192e48] bg-[#0f1d2e]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Device</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
-              This action cannot be undone.
+            <AlertDialogTitle style={{ color: "#e0ecf7" }}>
+              Delete Device
+            </AlertDialogTitle>
+            <AlertDialogDescription style={{ color: "#7fa3c2" }}>
+              This action cannot be undone. This will permanently delete the
+              device and all its sensor data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-[#192e48] bg-[#0b1520] text-[#7fa3c2] hover:bg-[#142338] hover:text-[#e0ecf7]">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (deleteTarget) {
-                  deleteDevice(deleteTarget.id);
-                  setDeleteTarget(null);
-                }
-              }}
+              onClick={handleDelete}
+              className="bg-[#ff4560] text-white hover:bg-[#e0334f]"
             >
               Delete
             </AlertDialogAction>

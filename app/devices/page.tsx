@@ -55,52 +55,100 @@ export default function DevicesPage() {
         title="Devices"
         subtitle={`${devices.length} devices registered`}
       />
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-6 sf-fade-in">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              style={{ color: "#4a6d8a" }}
+            />
             <Input
               placeholder="Search devices..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 border-[#192e48] bg-[#0b1520] text-[#e0ecf7] placeholder:text-[#4a6d8a] focus:border-[#00c8ff]/50"
             />
           </div>
           <Select value={filterZone} onValueChange={setFilterZone}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[200px] border-[#192e48] bg-[#0b1520] text-[#e0ecf7]">
               <SelectValue placeholder="Filter by zone" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Zones</SelectItem>
+            <SelectContent className="border-[#192e48] bg-[#0f1d2e]">
+              <SelectItem
+                value="all"
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
+                All Zones
+              </SelectItem>
               {ZONES.map((z) => (
-                <SelectItem key={z} value={z}>
+                <SelectItem
+                  key={z}
+                  value={z}
+                  className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+                >
                   {z}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[150px] border-[#192e48] bg-[#0b1520] text-[#e0ecf7]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="online">Online</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
+            <SelectContent className="border-[#192e48] bg-[#0f1d2e]">
+              <SelectItem
+                value="all"
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
+                All Status
+              </SelectItem>
+              <SelectItem
+                value="online"
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
+                Online
+              </SelectItem>
+              <SelectItem
+                value="offline"
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
+                Offline
+              </SelectItem>
+              <SelectItem
+                value="warning"
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
+                Warning
+              </SelectItem>
+              <SelectItem
+                value="critical"
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
+                Critical
+              </SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleAdd}>
+          <Button
+            onClick={handleAdd}
+            className="bg-[#00c8ff] text-[#070d18] hover:bg-[#00b0e0] font-semibold"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Device
           </Button>
         </div>
 
         {/* Results count */}
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredDevices.length} of {devices.length} devices
+        <p className="text-sm" style={{ color: "#4a6d8a" }}>
+          Showing{" "}
+          <span className="sf-mono" style={{ color: "#00c8ff" }}>
+            {filteredDevices.length}
+          </span>{" "}
+          of{" "}
+          <span className="sf-mono" style={{ color: "#00c8ff" }}>
+            {devices.length}
+          </span>{" "}
+          devices
         </p>
 
         {/* Table */}

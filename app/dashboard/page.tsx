@@ -16,7 +16,7 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Smart Factory IoT Monitoring Overview"
       />
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-6 sf-fade-in">
         {/* Stats */}
         <StatsCards />
 
@@ -35,13 +35,21 @@ export default function DashboardPage() {
 
         {/* Quick Links */}
         <div className="flex gap-3">
-          <Button asChild variant="outline">
+          <Button
+            asChild
+            variant="outline"
+            className="border-[#192e48] bg-[#0b1520] text-[#00c8ff] hover:bg-[#142338] hover:text-[#00c8ff] hover:border-[#00c8ff]/30"
+          >
             <Link href="/digital-twin">
               <Box className="mr-2 h-4 w-4" />
               Open Digital Twin
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button
+            asChild
+            variant="outline"
+            className="border-[#192e48] bg-[#0b1520] text-[#00ff9d] hover:bg-[#142338] hover:text-[#00ff9d] hover:border-[#00ff9d]/30"
+          >
             <Link href="/devices">
               <Cpu className="mr-2 h-4 w-4" />
               Manage Devices

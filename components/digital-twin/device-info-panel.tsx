@@ -4,7 +4,6 @@ import { GaugeChart } from "@/components/charts/gauge-chart";
 import { RealtimeLineChart } from "@/components/charts/realtime-line-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -13,18 +12,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { DeviceStatus } from "@/lib/types";
 import { useDeviceStore } from "@/stores/device-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { Cpu, ExternalLink, MapPin } from "lucide-react";
 import Link from "next/link";
 
-const statusVariant: Record<DeviceStatus, string> = {
-  online: "bg-green-500/10 text-green-500 border-green-500/20",
-  offline: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  warning: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  critical: "bg-red-500/10 text-red-500 border-red-500/20",
+const statusConfig: Record<
+  DeviceStatus,
+  { color: string; bg: string; border: string }
+> = {
+  online: {
+    color: "#00ff9d",
+    bg: "rgba(0,255,157,0.08)",
+    border: "rgba(0,255,157,0.2)",
+  },
+  offline: {
+    color: "#4a6d8a",
+    bg: "rgba(74,109,138,0.08)",
+    border: "rgba(74,109,138,0.2)",
+  },
+  warning: {
+    color: "#ffb800",
+    bg: "rgba(255,184,0,0.08)",
+    border: "rgba(255,184,0,0.2)",
+  },
+  critical: {
+    color: "#ff4560",
+    bg: "rgba(255,69,96,0.08)",
+    border: "rgba(255,69,96,0.2)",
+  },
 };
 
 export function DeviceInfoPanel() {
@@ -36,30 +53,36 @@ export function DeviceInfoPanel() {
   const device = devices.find((d) => d.id === selectedDeviceId);
 
   return (
-    <div className="flex h-full flex-col border-l bg-card">
+    <div
+      className="flex h-full flex-col"
+      style={{
+        background: "linear-gradient(180deg, #0b1520, #0f1d2e)",
+        borderLeft: "1px solid #192e48",
+      }}
+    >
       {/* Device Selector */}
-      <div className="border-b px-4 py-3">
+      <div className="px-4 py-3" style={{ borderBottom: "1px solid #192e48" }}>
         <Select
           value={selectedDeviceId ?? ""}
           onValueChange={(v) => setSelectedDeviceId(v || null)}
         >
-          <SelectTrigger className="h-9 text-xs">
+          <SelectTrigger className="h-9 text-xs border-[#192e48] bg-[#0b1520] text-[#e0ecf7]">
             <SelectValue placeholder="Select a device..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="border-[#192e48] bg-[#0f1d2e]">
             {devices.map((d) => (
-              <SelectItem key={d.id} value={d.id}>
+              <SelectItem
+                key={d.id}
+                value={d.id}
+                className="text-[#e0ecf7] focus:bg-[#142338] focus:text-[#00c8ff]"
+              >
                 <span className="flex items-center gap-2">
                   <span
-                    className={`inline-block h-2 w-2 rounded-full ${
-                      d.status === "online"
-                        ? "bg-green-500"
-                        : d.status === "warning"
-                          ? "bg-amber-500"
-                          : d.status === "critical"
-                            ? "bg-red-500"
-                            : "bg-gray-400"
-                    }`}
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{
+                      background: statusConfig[d.status].color,
+                      boxShadow: `0 0 4px ${statusConfig[d.status].color}60`,
+                    }}
                   />
                   {d.name}
                 </span>
@@ -71,41 +94,67 @@ export function DeviceInfoPanel() {
 
       <ScrollArea className="flex-1">
         {device ? (
-          <div className="space-y-4 p-4">
+          <div className="space-y-4 p-4 sf-fade-in">
             {/* Device Info Header */}
             <div>
               <div className="flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold">{device.name}</h3>
+                <Cpu className="h-4 w-4" style={{ color: "#00c8ff" }} />
+                <h3 className="font-semibold" style={{ color: "#e0ecf7" }}>
+                  {device.name}
+                </h3>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Badge
                   variant="outline"
-                  className={statusVariant[device.status]}
+                  className="border-0 text-xs"
+                  style={{
+                    background: statusConfig[device.status].bg,
+                    color: statusConfig[device.status].color,
+                  }}
                 >
                   {device.status}
                 </Badge>
-                <Badge variant="outline">{device.type}</Badge>
+                <Badge
+                  variant="outline"
+                  className="border-[#192e48] text-xs"
+                  style={{ color: "#7fa3c2" }}
+                >
+                  {device.type}
+                </Badge>
               </div>
-              <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+              <div
+                className="mt-2 flex items-center gap-1 text-xs"
+                style={{ color: "#4a6d8a" }}
+              >
                 <MapPin className="h-3 w-3" />
                 {device.location}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs" style={{ color: "#4a6d8a" }}>
                 {device.zone}
               </p>
             </div>
 
-            <Separator />
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Sensor Gauges */}
             <div>
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4
+                className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar"
+                style={{ color: "#7fa3c2" }}
+              >
                 Live Sensors
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 {device.sensors.map((sensor) => (
-                  <Card key={sensor.id} className="p-2">
+                  <div
+                    key={sensor.id}
+                    className="rounded-md p-2"
+                    style={{
+                      background: "#0b1520",
+                      border: "1px solid #192e48",
+                    }}
+                  >
                     <GaugeChart
                       value={sensor.currentValue}
                       min={sensor.min}
@@ -116,16 +165,20 @@ export function DeviceInfoPanel() {
                       label={sensor.name}
                       size={100}
                     />
-                  </Card>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <Separator />
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Mini Charts */}
             <div>
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4
+                className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar"
+                style={{ color: "#7fa3c2" }}
+              >
                 Recent Trend
               </h4>
               {device.sensors.map((sensor) => {
@@ -133,10 +186,16 @@ export function DeviceInfoPanel() {
                 return (
                   <div key={sensor.id} className="mb-3">
                     <div className="mb-1 flex items-baseline justify-between">
-                      <span className="text-[11px] font-medium">
+                      <span
+                        className="text-[11px] font-medium"
+                        style={{ color: "#e0ecf7" }}
+                      >
                         {sensor.name}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span
+                        className="text-[11px] sf-mono"
+                        style={{ color: "#00c8ff" }}
+                      >
                         {sensor.currentValue.toFixed(1)} {sensor.unit}
                       </span>
                     </div>
@@ -146,17 +205,23 @@ export function DeviceInfoPanel() {
                       height={80}
                       compact
                       showGrid={false}
+                      color="#00c8ff"
                     />
                   </div>
                 );
               })}
             </div>
 
-            <Separator />
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Quick Actions */}
             <div className="flex gap-2">
-              <Button asChild size="sm" className="flex-1">
+              <Button
+                asChild
+                size="sm"
+                className="flex-1 bg-[#00c8ff] text-[#070d18] hover:bg-[#00b0e0] font-semibold"
+              >
                 <Link href={`/devices/${device.id}`}>
                   <ExternalLink className="mr-1 h-3 w-3" />
                   View Details
@@ -166,8 +231,8 @@ export function DeviceInfoPanel() {
           </div>
         ) : (
           <div className="flex h-64 flex-col items-center justify-center gap-2 p-6 text-center">
-            <Cpu className="h-10 w-10 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">
+            <Cpu className="h-10 w-10" style={{ color: "#192e48" }} />
+            <p className="text-sm" style={{ color: "#4a6d8a" }}>
               Select a device from the dropdown or click a pin in the 3D model
             </p>
           </div>

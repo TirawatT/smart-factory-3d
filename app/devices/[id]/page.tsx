@@ -2,23 +2,11 @@
 
 import { GaugeChart } from "@/components/charts/gauge-chart";
 import { RealtimeLineChart } from "@/components/charts/realtime-line-chart";
-import { DeviceFormDialog } from "@/components/devices/device-form-dialog";
 import { Header } from "@/components/layout/header";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { AlertSeverity, DeviceStatus } from "@/lib/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DeviceStatus } from "@/lib/types";
 import { useDeviceStore } from "@/stores/device-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { format } from "date-fns";
@@ -27,24 +15,37 @@ import {
   ArrowLeft,
   Clock,
   MapPin,
-  Pencil,
-  Trash2,
+  Tag,
+  Wifi,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use } from "react";
 
-const statusVariant: Record<DeviceStatus, string> = {
-  online: "bg-green-500/10 text-green-500 border-green-500/20",
-  offline: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  warning: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  critical: "bg-red-500/10 text-red-500 border-red-500/20",
-};
-
-const severityStyles: Record<AlertSeverity, string> = {
-  critical: "bg-red-500/10 text-red-500 border-red-500/20",
-  warning: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  info: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+const statusConfig: Record<
+  DeviceStatus,
+  { color: string; bg: string; border: string }
+> = {
+  online: {
+    color: "#00ff9d",
+    bg: "rgba(0,255,157,0.08)",
+    border: "rgba(0,255,157,0.2)",
+  },
+  offline: {
+    color: "#4a6d8a",
+    bg: "rgba(74,109,138,0.08)",
+    border: "rgba(74,109,138,0.2)",
+  },
+  warning: {
+    color: "#ffb800",
+    bg: "rgba(255,184,0,0.08)",
+    border: "rgba(255,184,0,0.2)",
+  },
+  critical: {
+    color: "#ff4560",
+    bg: "rgba(255,69,96,0.08)",
+    border: "rgba(255,69,96,0.2)",
+  },
 };
 
 export default function DeviceDetailPage({
@@ -53,14 +54,9 @@ export default function DeviceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const devices = useDeviceStore((s) => s.devices);
-  const deleteDevice = useDeviceStore((s) => s.deleteDevice);
   const getReadings = useRealtimeStore((s) => s.getReadings);
   const alerts = useRealtimeStore((s) => s.alerts);
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const device = devices.find((d) => d.id === id);
 
@@ -69,10 +65,14 @@ export default function DeviceDetailPage({
       <>
         <Header title="Device Not Found" />
         <div className="flex flex-col items-center justify-center gap-4 p-12">
-          <p className="text-muted-foreground">
-            Device with ID &quot;{id}&quot; was not found.
+          <p style={{ color: "#7fa3c2" }}>
+            Device with ID &ldquo;{id}&rdquo; was not found.
           </p>
-          <Button asChild variant="outline">
+          <Button
+            asChild
+            variant="outline"
+            className="border-[#192e48] bg-[#0b1520] text-[#00c8ff] hover:bg-[#142338]"
+          >
             <Link href="/devices">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Devices
@@ -84,184 +84,285 @@ export default function DeviceDetailPage({
   }
 
   const deviceAlerts = alerts.filter((a) => a.deviceId === device.id);
-
-  const handleDelete = () => {
-    deleteDevice(device.id);
-    router.push("/devices");
-  };
+  const cfg = statusConfig[device.status];
 
   return (
     <>
-      <Header title={device.name} subtitle={device.description} />
-      <div className="space-y-6 p-6">
-        {/* Back + Actions */}
-        <div className="flex items-center justify-between">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/devices">
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Back to Devices
-            </Link>
-          </Button>
-          <div className="flex gap-2">
+      <Header
+        title={device.name}
+        subtitle={`${device.type} — ${device.zone}`}
+      />
+      <div className="space-y-6 p-6 sf-fade-in">
+        {/* Back + Info Row */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditOpen(true)}
+              asChild
+              variant="ghost"
+              size="icon"
+              className="mt-0.5 hover:bg-[#142338]"
             >
-              <Pencil className="mr-1 h-3 w-3" />
-              Edit
+              <Link href="/devices">
+                <ArrowLeft className="h-5 w-5" style={{ color: "#7fa3c2" }} />
+              </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive"
-              onClick={() => setDeleteOpen(true)}
+            <div>
+              <h2 className="text-xl font-bold" style={{ color: "#e0ecf7" }}>
+                {device.name}
+              </h2>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                <Badge
+                  variant="outline"
+                  className="border-0 uppercase sf-mono"
+                  style={{ background: cfg.bg, color: cfg.color }}
+                >
+                  {device.status}
+                </Badge>
+                <span
+                  className="flex items-center gap-1"
+                  style={{ color: "#7fa3c2" }}
+                >
+                  <Tag className="h-3 w-3" />
+                  {device.type}
+                </span>
+                <span
+                  className="flex items-center gap-1"
+                  style={{ color: "#7fa3c2" }}
+                >
+                  <MapPin className="h-3 w-3" />
+                  {device.location}
+                </span>
+                <span
+                  className="flex items-center gap-1"
+                  style={{ color: "#4a6d8a" }}
+                >
+                  <Clock className="h-3 w-3" />
+                  Updated{" "}
+                  {format(new Date(device.updatedAt), "dd MMM yyyy HH:mm")}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div
+            className="flex items-center gap-2 rounded-md px-3 py-1.5"
+            style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+          >
+            <Wifi
+              className="h-4 w-4 sf-pulse-dot"
+              style={{ color: cfg.color }}
+            />
+            <span
+              className="text-xs font-medium sf-mono"
+              style={{ color: cfg.color }}
             >
-              <Trash2 className="mr-1 h-3 w-3" />
-              Delete
-            </Button>
+              {device.status.toUpperCase()}
+            </span>
           </div>
         </div>
 
-        {/* Device Info Card */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap items-start gap-6">
-              <div className="flex-1 space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    variant="outline"
-                    className={statusVariant[device.status]}
-                  >
-                    {device.status}
-                  </Badge>
-                  <Badge variant="outline" className="capitalize">
-                    {device.type}
-                  </Badge>
-                  <Badge variant="outline">{device.zone}</Badge>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {device.location}
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  Last updated:{" "}
-                  {format(new Date(device.updatedAt), "dd MMM yyyy HH:mm")}
-                </div>
-                {device.matterportTagId && (
-                  <p className="text-xs text-muted-foreground">
-                    Matterport Tag: {device.matterportTagId}
-                  </p>
-                )}
-              </div>
-              {/* Quick Gauges */}
-              <div className="flex flex-wrap gap-4">
-                {device.sensors.slice(0, 3).map((sensor) => (
+        {/* Tabs */}
+        <Tabs defaultValue="sensors" className="w-full">
+          <TabsList
+            className="w-full justify-start rounded-none border-b bg-transparent p-0"
+            style={{ borderColor: "#192e48" }}
+          >
+            {["sensors", "charts", "alerts"].map((tab) => (
+              <TabsTrigger
+                key={tab}
+                value={tab}
+                className="rounded-none border-b-2 border-transparent px-4 py-2 text-sm capitalize transition-all data-[state=active]:border-[#00c8ff] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                style={{ color: "#7fa3c2" }}
+              >
+                {tab}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Sensors Tab */}
+          <TabsContent value="sensors" className="mt-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {device.sensors.map((sensor) => (
+                <div key={sensor.id} className="rounded-lg p-4 sf-card">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4
+                      className="text-sm font-medium"
+                      style={{ color: "#e0ecf7" }}
+                    >
+                      {sensor.name}
+                    </h4>
+                    <span
+                      className="text-[10px] uppercase sf-mono px-2 py-0.5 rounded"
+                      style={{
+                        background: "rgba(0,200,255,0.1)",
+                        color: "#00c8ff",
+                      }}
+                    >
+                      {sensor.type}
+                    </span>
+                  </div>
                   <GaugeChart
-                    key={sensor.id}
                     value={sensor.currentValue}
                     min={sensor.min}
                     max={sensor.max}
                     thresholdWarning={sensor.thresholdWarning}
                     thresholdCritical={sensor.thresholdCritical}
                     unit={sensor.unit}
-                    label={sensor.name}
-                    size={110}
+                    size={140}
                   />
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Sensor Detail Cards + Charts */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {device.sensors.map((sensor) => {
-            const readings = getReadings(sensor.id);
-            const isWarning = sensor.currentValue >= sensor.thresholdWarning;
-            const isCritical = sensor.currentValue >= sensor.thresholdCritical;
-
-            return (
-              <Card key={sensor.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">
-                      {sensor.name}
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      {isCritical && (
-                        <Badge
-                          variant="outline"
-                          className="bg-red-500/10 text-red-500 border-red-500/20"
-                        >
-                          Critical
-                        </Badge>
-                      )}
-                      {isWarning && !isCritical && (
-                        <Badge
-                          variant="outline"
-                          className="bg-amber-500/10 text-amber-500 border-amber-500/20"
-                        >
-                          Warning
-                        </Badge>
-                      )}
-                      <span className="text-lg font-bold">
-                        {sensor.currentValue.toFixed(1)}{" "}
-                        <span className="text-sm font-normal text-muted-foreground">
-                          {sensor.unit}
-                        </span>
-                      </span>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p
+                        className="text-[10px] uppercase"
+                        style={{ color: "#4a6d8a" }}
+                      >
+                        Min
+                      </p>
+                      <p
+                        className="text-xs font-medium sf-mono"
+                        style={{ color: "#7fa3c2" }}
+                      >
+                        {sensor.min}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className="text-[10px] uppercase"
+                        style={{ color: "#4a6d8a" }}
+                      >
+                        Current
+                      </p>
+                      <p
+                        className="text-xs font-bold sf-mono"
+                        style={{ color: "#00c8ff" }}
+                      >
+                        {sensor.currentValue.toFixed(1)}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className="text-[10px] uppercase"
+                        style={{ color: "#4a6d8a" }}
+                      >
+                        Max
+                      </p>
+                      <p
+                        className="text-xs font-medium sf-mono"
+                        style={{ color: "#7fa3c2" }}
+                      >
+                        {sensor.max}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Range: {sensor.min} – {sensor.max} {sensor.unit} | Warn:{" "}
-                    {sensor.thresholdWarning} | Critical:{" "}
-                    {sensor.thresholdCritical}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <RealtimeLineChart
-                    readings={readings}
-                    unit={sensor.unit}
-                    height={200}
-                    thresholdWarning={sensor.thresholdWarning}
-                    thresholdCritical={sensor.thresholdCritical}
-                    color={
-                      isCritical ? "#ef4444" : isWarning ? "#f59e0b" : undefined
-                    }
-                  />
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
 
-        {/* Alert History */}
-        {deviceAlerts.length > 0 && (
-          <>
-            <Separator />
-            <div>
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Alert History
-              </h2>
-              <div className="space-y-2">
-                {deviceAlerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className="flex items-center justify-between rounded-md border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant="outline"
-                        className={severityStyles[alert.severity]}
+          {/* Charts Tab */}
+          <TabsContent value="charts" className="mt-6">
+            <div className="space-y-6">
+              {device.sensors.map((sensor) => {
+                const readings = getReadings(sensor.id);
+                return (
+                  <div key={sensor.id} className="rounded-lg p-4 sf-card">
+                    <div className="mb-3 flex items-baseline justify-between">
+                      <h4
+                        className="text-sm font-medium sf-section-bar"
+                        style={{ color: "#e0ecf7" }}
                       >
-                        {alert.severity}
-                      </Badge>
-                      <div>
-                        <p className="text-sm">{alert.message}</p>
-                        <p className="text-xs text-muted-foreground">
+                        {sensor.name}
+                      </h4>
+                      <span
+                        className="sf-mono text-sm"
+                        style={{ color: "#00c8ff" }}
+                      >
+                        {sensor.currentValue.toFixed(1)} {sensor.unit}
+                      </span>
+                    </div>
+                    <RealtimeLineChart
+                      readings={readings}
+                      unit={sensor.unit}
+                      color="#00c8ff"
+                      thresholdWarning={sensor.thresholdWarning}
+                      thresholdCritical={sensor.thresholdCritical}
+                      height={200}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* Alerts Tab */}
+          <TabsContent value="alerts" className="mt-6">
+            {deviceAlerts.length === 0 ? (
+              <div className="py-12 text-center" style={{ color: "#4a6d8a" }}>
+                <AlertTriangle
+                  className="mx-auto mb-3 h-10 w-10"
+                  style={{ color: "#192e48" }}
+                />
+                <p>No alerts for this device</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {deviceAlerts.map((alert) => {
+                  const alertColor =
+                    alert.severity === "critical"
+                      ? "#ff4560"
+                      : alert.severity === "warning"
+                        ? "#ffb800"
+                        : "#00c8ff";
+                  return (
+                    <div
+                      key={alert.id}
+                      className="flex items-start gap-3 rounded-md p-3"
+                      style={{
+                        background: `${alertColor}08`,
+                        border: `1px solid ${alertColor}20`,
+                      }}
+                    >
+                      {alert.severity === "critical" ? (
+                        <XCircle
+                          className="h-4 w-4 mt-0.5 shrink-0"
+                          style={{ color: alertColor }}
+                        />
+                      ) : (
+                        <AlertTriangle
+                          className="h-4 w-4 mt-0.5 shrink-0"
+                          style={{ color: alertColor }}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="border-0 text-[10px] uppercase sf-mono"
+                            style={{
+                              background: `${alertColor}15`,
+                              color: alertColor,
+                            }}
+                          >
+                            {alert.severity}
+                          </Badge>
+                          {alert.acknowledged && (
+                            <span
+                              className="text-[10px]"
+                              style={{ color: "#4a6d8a" }}
+                            >
+                              Acknowledged
+                            </span>
+                          )}
+                        </div>
+                        <p
+                          className="mt-1 text-sm"
+                          style={{ color: "#e0ecf7" }}
+                        >
+                          {alert.message}
+                        </p>
+                        <p
+                          className="mt-1 text-[10px] sf-mono"
+                          style={{ color: "#4a6d8a" }}
+                        >
                           {format(
                             new Date(alert.timestamp),
                             "dd MMM yyyy HH:mm:ss",
@@ -269,47 +370,13 @@ export default function DeviceDetailPage({
                         </p>
                       </div>
                     </div>
-                    {alert.acknowledged && (
-                      <Badge variant="outline" className="text-xs">
-                        Acknowledged
-                      </Badge>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
-          </>
-        )}
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Edit Dialog */}
-      <DeviceFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        editDevice={device}
-      />
-
-      {/* Delete Dialog */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Device</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{device.name}&quot;? This
-              action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

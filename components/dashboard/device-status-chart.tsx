@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDeviceStore } from "@/stores/device-store";
 import {
   Cell,
@@ -12,10 +11,10 @@ import {
 } from "recharts";
 
 const COLORS: Record<string, string> = {
-  online: "#10b981",
-  offline: "#6b7280",
-  warning: "#f59e0b",
-  critical: "#ef4444",
+  online: "#00ff9d",
+  offline: "#4a6d8a",
+  warning: "#ffb800",
+  critical: "#ff4560",
 };
 
 export function DeviceStatusChart() {
@@ -32,36 +31,57 @@ export function DeviceStatusChart() {
   const data = Object.entries(statusCounts).map(([status, count]) => ({
     name: status.charAt(0).toUpperCase() + status.slice(1),
     value: count,
-    color: COLORS[status] || "#6b7280",
+    color: COLORS[status] || "#4a6d8a",
   }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">Device Status</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
-              paddingAngle={4}
-              dataKey="value"
-              label={({ name, value }) => `${name}: ${value}`}
-            >
-              {data.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend verticalAlign="bottom" height={36} />
-          </PieChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <div className="rounded-lg p-4 sf-card">
+      <div className="flex items-center gap-2 mb-4">
+        <div
+          className="h-4 w-1 rounded-full"
+          style={{ background: "linear-gradient(180deg, #00c8ff, #00ff9d)" }}
+        />
+        <h3 className="text-sm font-semibold" style={{ color: "#e0ecf7" }}>
+          Device Status
+        </h3>
+      </div>
+      <ResponsiveContainer width="100%" height={220}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={50}
+            outerRadius={80}
+            paddingAngle={4}
+            dataKey="value"
+            stroke="none"
+            label={({ name, value }) => `${name}: ${value}`}
+          >
+            {data.map((entry, i) => (
+              <Cell key={i} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              background: "#0f1d2e",
+              border: "1px solid #192e48",
+              borderRadius: "6px",
+              color: "#e0ecf7",
+              fontSize: "12px",
+            }}
+          />
+          <Legend
+            verticalAlign="bottom"
+            height={36}
+            formatter={(value: string) => (
+              <span style={{ color: "#7fa3c2", fontSize: "11px" }}>
+                {value}
+              </span>
+            )}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
