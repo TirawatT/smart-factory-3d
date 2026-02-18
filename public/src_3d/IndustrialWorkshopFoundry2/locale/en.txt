@@ -1,0 +1,28 @@
+#: locale=en
+
+## Action
+
+### URL
+WebFrame_01B68090_780E_EF75_41D9_2489272C3B63.url = //www.youtube.com/embed/goackfyqlxU?v=goackfyqlxU&loop=1&playlist=goackfyqlxU&autoplay=3
+
+## Media
+
+### Audio
+audiores_C42B6B73_47D2_40B7_41DB_3E2B39B29DC9.mp3Url = media/audio_BA877496_47D6_4048_41DD_DF0BCE917D52_en.mp3
+
+### Audio Subtitles
+
+### Title
+panorama_BE898A77_47F6_C060_41C4_D091513F9D86.label = Industrial Workshop Foundry
+
+## Popup
+
+### Body
+htmlText_08A5ACD2_7805_90FC_41C6_4B286B346CC6.html = <div style="text-align:left; color:#000; "><HTML><BODY><DIV STYLE="text-align:center;font-size:16px;"><SPAN STYLE="display:inline-block; letter-spacing:0px; white-space:pre-wrap;color:#000000;font-size:16px;font-family:Arial, Helvetica, sans-serif;"><B>Test Info hello world</B></SPAN></DIV><DIV STYLE="text-align:center;font-size:16px;"><SPAN STYLE="display:inline-block; letter-spacing:0px; white-space:pre-wrap;color:#000000;font-size:16px;font-family:Arial, Helvetica, sans-serif;"><B>I love my job I love my job.</B></SPAN></DIV><div><a href="/mylink">my custom link</a></div><div><a href="/mylink2">my custom link 2</a></div></BODY></HTML></div>
+
+## Tour
+
+### Description
+
+### Title
+tour.name = Industrial Workshop Foundry

@@ -12,7 +12,8 @@ interface MatterportViewerProps {
 }
 
 export function MatterportViewer({ className }: MatterportViewerProps) {
-  const [url, setUrl] = useState("");
+  const defaultUrl = "/src_3d/IndustrialWorkshopFoundry2/index.htm";
+  const [url, setUrl] = useState(defaultUrl);
   const [editUrl, setEditUrl] = useState("");
   const [showConfig, setShowConfig] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
