@@ -92,7 +92,7 @@ export default function DeviceDetailPage({
         title={device.name}
         subtitle={`${device.type} — ${device.zone}`}
       />
-      <div className="space-y-6 p-6 sf-fade-in">
+      <div className="space-y-4 p-3 sm:p-6 md:space-y-6 sf-fade-in">
         {/* Back + Info Row */}
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">

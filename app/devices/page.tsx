@@ -55,7 +55,7 @@ export default function DevicesPage() {
         title="Devices"
         subtitle={`${devices.length} devices registered`}
       />
-      <div className="space-y-4 p-6 sf-fade-in">
+      <div className="space-y-4 p-3 sm:p-6 sf-fade-in">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
@@ -152,7 +152,9 @@ export default function DevicesPage() {
         </p>
 
         {/* Table */}
-        <DeviceTable devices={filteredDevices} onEdit={handleEdit} />
+        <div className="overflow-x-auto">
+          <DeviceTable devices={filteredDevices} onEdit={handleEdit} />
+        </div>
 
         {/* Form Dialog */}
         <DeviceFormDialog

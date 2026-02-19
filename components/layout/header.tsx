@@ -1,9 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useMobileMenu } from "@/components/layout/app-shell";
 import { useRealtimeStore } from "@/stores/realtime-store";
-import { Bell, Radio, Zap } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface HeaderProps {
@@ -12,70 +11,97 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const { openMobileMenu } = useMobileMenu();
   const alerts = useRealtimeStore((s) => s.alerts);
-  const unackCount = alerts.filter((a) => !a.acknowledged).length;
-  const [time, setTime] = useState("");
+  const activeAlerts = alerts.filter((a) => !a.acknowledged).length;
+
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      setTime(
-        now.toLocaleTimeString("en-US", {
-          hour12: false,
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-      );
-    };
-    tick();
-    const id = setInterval(tick, 1000);
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
+  const timeStr = now
+    ? now.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "--:--:--";
+
+  const dateStr = now
+    ? now.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+
   return (
     <header
-      className="flex h-14 items-center justify-between px-6"
+      className="sticky top-0 z-30 flex h-14 items-center gap-3 px-4"
       style={{
-        background: "linear-gradient(90deg, #0b1520 0%, #0f1d2e 100%)",
+        background: "rgba(7,13,24,0.90)",
         borderBottom: "1px solid #192e48",
+        backdropFilter: "blur(8px)",
       }}
     >
-      <div className="flex items-center gap-3">
-        <div
-          className="h-6 w-1 rounded-full"
-          style={{ background: "linear-gradient(180deg, #00c8ff, #00ff9d)" }}
-        />
-        <div>
-          <h1
-            className="text-base font-semibold tracking-wide"
-            style={{ color: "#e0ecf7" }}
-          >
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-[11px]" style={{ color: "#4a6d8a" }}>
-              {subtitle}
-            </p>
-          )}
-        </div>
-      </div>
+      {/* Hamburger (mobile only) */}
+      <button
+        className="md:hidden flex h-9 w-9 items-center justify-center rounded-md hover:bg-[#142338] shrink-0"
+        style={{ color: "#7fa3c2" }}
+        onClick={openMobileMenu}
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
 
-      <div className="flex items-center gap-4">
-        {/* Live indicator */}
-        <div
-          className="flex items-center gap-2 rounded-md px-3 py-1.5"
+      {/* Title */}
+      <div className="flex-1 min-w-0">
+        <h1
+          className="text-base sm:text-lg font-bold leading-tight truncate"
           style={{
-            background: "rgba(0,255,157,0.06)",
-            border: "1px solid rgba(0,255,157,0.15)",
+            color: "#e0ecf7",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            letterSpacing: "0.04em",
           }}
         >
-          <Radio
-            className="h-3.5 w-3.5 sf-pulse-dot"
-            style={{ color: "#00ff9d" }}
+          {title}
+        </h1>
+        {subtitle && (
+          <p
+            className="text-[10px] sm:text-xs truncate"
+            style={{
+              color: "#4a6d8a",
+              fontFamily: "'IBM Plex Mono', monospace",
+            }}
+          >
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      {/* Right controls */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* LIVE badge */}
+        <div
+          className="hidden sm:flex items-center gap-1.5 rounded px-2 py-0.5"
+          style={{
+            background: "rgba(0,255,157,0.1)",
+            border: "1px solid rgba(0,255,157,0.3)",
+          }}
+        >
+          <span
+            className="h-1.5 w-1.5 rounded-full sf-pulse-dot"
+            style={{
+              background: "#00ff9d",
+              boxShadow: "0 0 4px rgba(0,255,157,0.6)",
+            }}
           />
           <span
-            className="text-xs font-medium sf-mono"
+            className="text-[10px] font-bold sf-mono"
             style={{ color: "#00ff9d" }}
           >
             LIVE
@@ -83,34 +109,38 @@ export function Header({ title, subtitle }: HeaderProps) {
         </div>
 
         {/* Clock */}
-        <div
-          className="flex items-center gap-1.5 text-xs sf-mono"
-          style={{ color: "#7fa3c2" }}
-        >
-          <Zap className="h-3.5 w-3.5" style={{ color: "#00c8ff" }} />
-          <span>{time}</span>
+        <div className="hidden sm:flex flex-col items-end">
+          <span
+            className="text-xs font-bold sf-mono"
+            style={{ color: "#00c8ff" }}
+          >
+            {timeStr}
+          </span>
+          <span className="text-[9px] sf-mono" style={{ color: "#4a6d8a" }}>
+            {dateStr}
+          </span>
         </div>
 
-        {/* Alerts indicator */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 hover:bg-[#142338]"
+        {/* Bell */}
+        <button
+          className="relative flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200 hover:bg-[#142338]"
+          style={{ color: "#7fa3c2" }}
+          aria-label="Alerts"
         >
-          <Bell className="h-5 w-5" style={{ color: "#7fa3c2" }} />
-          {unackCount > 0 && (
-            <Badge
-              className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-[10px] border-0"
+          <Bell className="h-4.5 w-4.5" />
+          {activeAlerts > 0 && (
+            <span
+              className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold sf-mono"
               style={{
                 background: "#ff4560",
                 color: "#fff",
-                boxShadow: "0 0 8px rgba(255,69,96,0.4)",
+                boxShadow: "0 0 6px rgba(255,69,96,0.5)",
               }}
             >
-              {unackCount}
-            </Badge>
+              {activeAlerts > 9 ? "9+" : activeAlerts}
+            </span>
           )}
-        </Button>
+        </button>
       </div>
     </header>
   );

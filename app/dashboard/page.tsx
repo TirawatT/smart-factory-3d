@@ -16,7 +16,7 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="Smart Factory IoT Monitoring Overview"
       />
-      <div className="space-y-6 p-6 sf-fade-in">
+      <div className="space-y-4 p-3 sm:p-6 md:space-y-6 sf-fade-in">
         {/* Stats */}
         <StatsCards />
 

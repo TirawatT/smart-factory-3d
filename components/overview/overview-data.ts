@@ -716,7 +716,7 @@ export const factoryData: FactorySite = {
       subtitle: "Production",
       status: "warn",
       statusLabel: "\u26A0 1 Warning",
-      style: { left: "4%", top: "14%", width: "24%", height: "43%" },
+      style: { left: "4%", top: "7%", width: "24%", height: "60%" },
       floors: [
         {
           id: "f1",
@@ -846,7 +846,7 @@ export const factoryData: FactorySite = {
       subtitle: "Assembly & QC",
       status: "ok",
       statusLabel: "\u25C9 All Normal",
-      style: { left: "33%", top: "7%", width: "28%", height: "52%" },
+      style: { left: "36%", top: "7%", width: "36%", height: "60%" },
       floors: [
         {
           id: "bf1",
@@ -882,7 +882,7 @@ export const factoryData: FactorySite = {
       subtitle: "Warehouse",
       status: "ok",
       statusLabel: "\u25C9 All Normal",
-      style: { left: "73%", top: "18%", width: "22%", height: "36%" },
+      style: { left: "79%", top: "7%", width: "17%", height: "60%" },
       floors: [
         {
           id: "cf1",
@@ -918,7 +918,7 @@ export const factoryData: FactorySite = {
       subtitle: "Power \u00B7 Cooling \u00B7 Air Supply",
       status: "ok",
       statusLabel: "\u25C9 Normal",
-      style: { left: "7%", top: "72%", width: "38%", height: "19%" },
+      style: { left: "4%", top: "76%", width: "91%", height: "19%" },
       floors: [
         {
           id: "df1",
