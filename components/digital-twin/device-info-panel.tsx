@@ -15,8 +15,16 @@ import {
 import { DeviceStatus } from "@/lib/types";
 import { useDeviceStore } from "@/stores/device-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
-import { Cpu, ExternalLink, MapPin } from "lucide-react";
+import {
+  Check,
+  Clipboard,
+  Code2,
+  Cpu,
+  ExternalLink,
+  MapPin,
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 const statusConfig: Record<
   DeviceStatus,
@@ -49,8 +57,32 @@ export function DeviceInfoPanel() {
   const selectedDeviceId = useRealtimeStore((s) => s.selectedDeviceId);
   const setSelectedDeviceId = useRealtimeStore((s) => s.setSelectedDeviceId);
   const getReadings = useRealtimeStore((s) => s.getReadings);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedSnippet, setCopiedSnippet] = useState(false);
 
   const device = devices.find((d) => d.id === selectedDeviceId);
+
+  function copyDeviceUrl() {
+    if (!device) return;
+    const url = `${window.location.origin}/digital-twin?device=${device.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    });
+  }
+
+  function copySnippet() {
+    if (!device) return;
+    const snippet =
+      `<!-- Device Pin: ${device.name} -->\n` +
+      `<a href="#" onclick="window.parent.postMessage({deviceId:'${device.id}'},'*');return false;" ` +
+      `title="${device.name}" style="color:#00c8ff;font-family:sans-serif;font-size:12px;">` +
+      `📍 ${device.name}</a>`;
+    navigator.clipboard.writeText(snippet).then(() => {
+      setCopiedSnippet(true);
+      setTimeout(() => setCopiedSnippet(false), 2000);
+    });
+  }
 
   return (
     <div
@@ -227,6 +259,102 @@ export function DeviceInfoPanel() {
                   View Details
                 </Link>
               </Button>
+            </div>
+
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid #192e48" }} />
+
+            {/* Link Generator */}
+            <div>
+              <h4
+                className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar"
+                style={{ color: "#7fa3c2" }}
+              >
+                Generate Link
+              </h4>
+
+              {/* Device URL */}
+              <div
+                className="mb-2 rounded-md px-3 py-2"
+                style={{ background: "#0b1520", border: "1px solid #192e48" }}
+              >
+                <p
+                  className="mb-1 text-[10px] uppercase tracking-wider"
+                  style={{ color: "#4a6d8a" }}
+                >
+                  Deep-link URL
+                </p>
+                <p
+                  className="mb-2 break-all text-[11px] sf-mono"
+                  style={{ color: "#00c8ff" }}
+                >
+                  /digital-twin?device={device.id}
+                </p>
+                <Button
+                  size="sm"
+                  className="h-7 w-full text-xs border-[#1e3c60] bg-[#0f1d2e] text-[#e0ecf7] hover:bg-[#142338] hover:text-[#00c8ff]"
+                  variant="outline"
+                  onClick={copyDeviceUrl}
+                >
+                  {copiedUrl ? (
+                    <>
+                      <Check className="mr-1 h-3 w-3 text-[#00ff9d]" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Clipboard className="mr-1 h-3 w-3" />
+                      Copy URL
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* 3D HTML Snippet */}
+              <div
+                className="rounded-md px-3 py-2"
+                style={{ background: "#0b1520", border: "1px solid #192e48" }}
+              >
+                <p
+                  className="mb-1 text-[10px] uppercase tracking-wider"
+                  style={{ color: "#4a6d8a" }}
+                >
+                  3D Viewer snippet
+                </p>
+                <p
+                  className="mb-2 break-all text-[11px] sf-mono leading-relaxed"
+                  style={{ color: "#7fa3c2" }}
+                >
+                  {`<a onclick="postMessage({deviceId:'${device.id}'},'*')">📍 ${device.name}</a>`}
+                </p>
+                <Button
+                  size="sm"
+                  className="h-7 w-full text-xs border-[#1e3c60] bg-[#0f1d2e] text-[#e0ecf7] hover:bg-[#142338] hover:text-[#00c8ff]"
+                  variant="outline"
+                  onClick={copySnippet}
+                >
+                  {copiedSnippet ? (
+                    <>
+                      <Check className="mr-1 h-3 w-3 text-[#00ff9d]" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Code2 className="mr-1 h-3 w-3" />
+                      Copy 3D Snippet
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {device.matterportTagId && (
+                <p className="mt-2 text-[10px]" style={{ color: "#4a6d8a" }}>
+                  Matterport Tag ID:{" "}
+                  <span className="sf-mono" style={{ color: "#7fa3c2" }}>
+                    {device.matterportTagId}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
         ) : (

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useDeviceStore } from "@/stores/device-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { Box, Maximize2, Minimize2, Settings } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface MatterportViewerProps {
   className?: string;
@@ -21,21 +21,28 @@ export function MatterportViewer({ className }: MatterportViewerProps) {
   const setSelectedDeviceId = useRealtimeStore((s) => s.setSelectedDeviceId);
   const getDeviceByTagId = useDeviceStore((s) => s.getDeviceByTagId);
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("message", (event) => {
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
       try {
         const data = event.data;
-        if (data && data.tagId) {
+        if (!data) return;
+        // Support { deviceId } direct reference
+        if (data.deviceId) {
+          setSelectedDeviceId(data.deviceId);
+          return;
+        }
+        // Support legacy { tagId } matterport tag approach
+        if (data.tagId) {
           const device = getDeviceByTagId(data.tagId);
-          if (device) {
-            setSelectedDeviceId(device.id);
-          }
+          if (device) setSelectedDeviceId(device.id);
         }
       } catch {
         // ignore non-JSON messages
       }
-    });
-  }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [setSelectedDeviceId, getDeviceByTagId]);
 
   const handleSaveUrl = () => {
     setUrl(editUrl);

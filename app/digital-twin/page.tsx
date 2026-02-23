@@ -3,8 +3,21 @@
 import { DeviceInfoPanel } from "@/components/digital-twin/device-info-panel";
 import { MatterportViewer } from "@/components/digital-twin/matterport-viewer";
 import { Header } from "@/components/layout/header";
+import { useRealtimeStore } from "@/stores/realtime-store";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
 
-export default function DigitalTwinPage() {
+function DigitalTwinInner() {
+  const searchParams = useSearchParams();
+  const setSelectedDeviceId = useRealtimeStore((s) => s.setSelectedDeviceId);
+
+  useEffect(() => {
+    const deviceId = searchParams.get("device");
+    if (deviceId) {
+      setSelectedDeviceId(deviceId);
+    }
+  }, [searchParams, setSelectedDeviceId]);
+
   return (
     <>
       <Header
@@ -20,5 +33,13 @@ export default function DigitalTwinPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function DigitalTwinPage() {
+  return (
+    <Suspense fallback={null}>
+      <DigitalTwinInner />
+    </Suspense>
   );
 }
