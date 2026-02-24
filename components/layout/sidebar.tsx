@@ -14,6 +14,7 @@ import {
   Cpu,
   Factory,
   LayoutDashboard,
+  ShieldAlert,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,6 +23,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Digital Twin", href: "/digital-twin", icon: Box },
+  { label: "Security", href: "/security", icon: ShieldAlert },
   { label: "Devices", href: "/devices", icon: Cpu },
 ];
 
