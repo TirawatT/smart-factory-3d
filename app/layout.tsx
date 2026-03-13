@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/layout/app-shell";
+import { LayoutProviderClient } from "@/components/layout/layout-provider-client";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -28,7 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppShell>{children}</AppShell>
+        <LayoutProviderClient>{children}</LayoutProviderClient>
       </body>
     </html>
   );
