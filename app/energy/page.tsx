@@ -1,6 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/header";
+import { useEnergy, useTopConsumers } from "@/lib/hooks/use-analytics";
 import {
   Area,
   AreaChart,
@@ -17,31 +18,10 @@ import {
 } from "recharts";
 import { AlertTriangle, Lightbulb, TrendingDown, Zap } from "lucide-react";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-const trendData = [
-  { day: "Mon", peak: 142, offPeak: 98 },
-  { day: "Tue", peak: 155, offPeak: 102 },
-  { day: "Wed", peak: 138, offPeak: 95 },
-  { day: "Thu", peak: 167, offPeak: 110 },
-  { day: "Fri", peak: 149, offPeak: 103 },
-  { day: "Sat", peak: 89,  offPeak: 74 },
-  { day: "Sun", peak: 72,  offPeak: 61 },
-];
-
 const tariffData = [
   { name: "Peak",     value: 58, color: "#ff4560" },
   { name: "Off-Peak", value: 30, color: "#00c8ff" },
   { name: "Shoulder", value: 12, color: "#ffb800" },
-];
-
-const topConsumers = [
-  { name: "CNC Machine A1",   kWh: 284 },
-  { name: "Assembly Robot B2",kWh: 231 },
-  { name: "HVAC Zone A",      kWh: 198 },
-  { name: "Injection Mold C", kWh: 175 },
-  { name: "Conveyor System",  kWh: 142 },
-  { name: "Compressor D1",    kWh: 118 },
 ];
 
 const recommendations = [
@@ -65,7 +45,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function EnergyPage() {
-  const totalKwh = trendData.reduce((s, d) => s + d.peak + d.offPeak, 0);
+  const { data: energyData = [] } = useEnergy();
+  const { data: topConsumersData = [] } = useTopConsumers();
+
+  const trendData = energyData.map((d) => ({ day: d.date, peak: d.peak / 10, offPeak: d.offPeak / 10 }));
+  const topConsumers = topConsumersData.map((d) => ({ name: d.device.split(" ").slice(0,3).join(" "), kWh: d.kwh }));
+
+  const totalKwh = energyData.reduce((s, d) => s + d.peak + d.offPeak, 0) || trendData.reduce((s, d) => s + d.peak + d.offPeak, 0);
   const totalCost = Math.round(totalKwh * 4.2);
   const carbon    = (totalKwh * 0.5213 / 1000).toFixed(2);
 

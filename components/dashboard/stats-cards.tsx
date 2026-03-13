@@ -1,7 +1,7 @@
 "use client";
 
-import { useDeviceStore } from "@/stores/device-store";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { useKPIs } from "@/lib/hooks/use-analytics";
+import { useDevices } from "@/lib/hooks/use-devices";
 import { AlertTriangle, Cpu, Thermometer, Wifi } from "lucide-react";
 
 interface StatCardProps {
@@ -65,13 +65,13 @@ function StatCard({
 }
 
 export function StatsCards() {
-  const devices = useDeviceStore((s) => s.devices);
-  const alerts = useRealtimeStore((s) => s.alerts);
+  const { data: kpis } = useKPIs();
+  const { data: devices = [] } = useDevices();
 
-  const total = devices.length;
-  const online = devices.filter((d) => d.status === "online").length;
-  const offline = devices.filter((d) => d.status === "offline").length;
-  const unackAlerts = alerts.filter((a) => !a.acknowledged).length;
+  const total = kpis?.totalDevices ?? devices.length;
+  const online = kpis?.onlineDevices ?? devices.filter((d) => d.status === "online").length;
+  const offline = total - online;
+  const unackAlerts = kpis?.activeAlerts ?? 0;
 
   const tempSensors = devices.flatMap((d) =>
     d.sensors.filter((s) => s.type === "temperature"),
@@ -103,7 +103,7 @@ export function StatsCards() {
       <StatCard
         title="Active Alerts"
         value={unackAlerts}
-        subtitle={`${alerts.length} total alerts`}
+        subtitle={`${kpis?.activeAlerts ?? 0} active alerts`}
         icon={<AlertTriangle className="h-4 w-4" />}
         accentColor="#ffb800"
         glowColor="rgba(255,184,0,0.15)"

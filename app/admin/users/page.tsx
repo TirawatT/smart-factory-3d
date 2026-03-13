@@ -2,30 +2,13 @@
 
 import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
-import { useAuthStore, AuthUser, UserRole } from "@/stores/auth-store";
+import { useCreateUser, useDeleteUser, useUpdateUser, useUsers } from "@/lib/hooks/use-users";
+import { UserRecord } from "@/lib/api/users";
+import { useAuthStore, UserRole } from "@/stores/auth-store";
 import { Check, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
-// ── Mock extended user list ────────────────────────────────────────────────────
-
-interface UserRecord {
-  id: string;
-  email: string;
-  fullName: string;
-  role: UserRole;
-  isActive: boolean;
-  lastLogin: string;
-  sites: string[];
-}
-
-const INITIAL_USERS: UserRecord[] = [
-  { id: "user-001", email: "admin@factory.com",    fullName: "Admin User",      role: "admin",    isActive: true,  lastLogin: "2026-03-13 08:42", sites: ["NMC Chonburi"] },
-  { id: "user-002", email: "manager@factory.com",  fullName: "Factory Manager", role: "manager",  isActive: true,  lastLogin: "2026-03-13 07:15", sites: ["NMC Chonburi"] },
-  { id: "user-003", email: "operator@factory.com", fullName: "Floor Operator",  role: "operator", isActive: true,  lastLogin: "2026-03-12 22:30", sites: ["NMC Chonburi"] },
-  { id: "user-004", email: "somchai@factory.com",  fullName: "Somchai Rattana", role: "operator", isActive: true,  lastLogin: "2026-03-12 14:20", sites: ["NMC Chonburi"] },
-  { id: "user-005", email: "wichai@factory.com",   fullName: "Wichai Panya",    role: "operator", isActive: false, lastLogin: "2026-02-28 09:00", sites: ["NMC Chonburi"] },
-  { id: "user-006", email: "guest@factory.com",    fullName: "Guest User",      role: "guest",    isActive: true,  lastLogin: "Never",            sites: [] },
-];
+// ── UserRecord type is imported from lib/api/users ────────────────────────────
 
 const ROLE_COLORS: Record<UserRole, { color: string; bg: string }> = {
   admin:    { color: "#ff4560", bg: "rgba(255,69,96,0.12)" },
@@ -38,7 +21,11 @@ const EMPTY_FORM = { email: "", fullName: "", role: "operator" as UserRole, isAc
 
 export default function AdminUsersPage() {
   const currentUser = useAuthStore((s) => s.user);
-  const [users, setUsers] = useState<UserRecord[]>(INITIAL_USERS);
+  const { data: users = [] } = useUsers();
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
+
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -52,9 +39,7 @@ export default function AdminUsersPage() {
   );
 
   const saveEdit = (id: string) => {
-    setUsers((prev) => prev.map((u) =>
-      u.id === id ? { ...u, email: form.email, fullName: form.fullName, role: form.role, isActive: form.isActive } : u
-    ));
+    updateUser.mutate({ id, data: { email: form.email, fullName: form.fullName, role: form.role, isActive: form.isActive } });
     setEditingId(null);
   };
 
@@ -66,16 +51,13 @@ export default function AdminUsersPage() {
 
   const addUser = () => {
     if (!form.email || !form.fullName) return;
-    const newUser: UserRecord = {
-      id: `user-${Date.now()}`, ...form, lastLogin: "Never", sites: ["NMC Chonburi"],
-    };
-    setUsers((prev) => [...prev, newUser]);
+    createUser.mutate(form);
     setShowAdd(false);
     setForm(EMPTY_FORM);
   };
 
   const deleteUser = (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    deleteUserMutation.mutate(id);
     setDeleteId(null);
   };
 

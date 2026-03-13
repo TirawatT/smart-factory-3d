@@ -1,37 +1,14 @@
 "use client";
 
 import { Header } from "@/components/layout/header";
+import { useDowntimeCauses, useKPIs, useOEE, useProduction } from "@/lib/hooks/use-analytics";
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
 } from "recharts";
 import { Download, BarChart3, TrendingUp, Clock, Wrench } from "lucide-react";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-const oeeTrend = [
-  { week: "W1", oee: 78, availability: 88, performance: 90, quality: 99 },
-  { week: "W2", oee: 82, availability: 91, performance: 92, quality: 98 },
-  { week: "W3", oee: 80, availability: 89, performance: 91, quality: 98 },
-  { week: "W4", oee: 85, availability: 93, performance: 93, quality: 98 },
-  { week: "W5", oee: 87, availability: 94, performance: 94, quality: 98 },
-  { week: "W6", oee: 83, availability: 92, performance: 91, quality: 99 },
-];
-
-const productionComparison = [
-  { line: "Line A", target: 1200, actual: 1143, unit: "units" },
-  { line: "Line B", target: 900,  actual: 878,  unit: "units" },
-  { line: "Line C", target: 600,  actual: 621,  unit: "units" },
-  { line: "Line D", target: 450,  actual: 389,  unit: "units" },
-];
-
-const downtimeData = [
-  { cause: "Mechanical",  minutes: 142, color: "#ff4560" },
-  { cause: "Electrical",  minutes: 98,  color: "#ffb800" },
-  { cause: "Setup/Changeover", minutes: 210, color: "#00c8ff" },
-  { cause: "Material",    minutes: 65,  color: "#8b5cf6" },
-  { cause: "Operator",    minutes: 43,  color: "#00ff9d" },
-];
+const DOWNTIME_COLORS = ["#ff4560", "#ffb800", "#00c8ff", "#8b5cf6", "#00ff9d"];
 
 const CHART_TOOLTIP_STYLE = {
   contentStyle: { background: "#0f1d2e", border: "1px solid #192e48", borderRadius: 8 },
@@ -60,6 +37,23 @@ function ReportCard({ icon, title, value, unit, trend, trendUp }: {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
+  const { data: kpis } = useKPIs();
+  const { data: oeeData = [] } = useOEE();
+  const { data: productionData = [] } = useProduction();
+  const { data: downtimeRaw = [] } = useDowntimeCauses();
+
+  const oeeTrend = oeeData.slice(-6).map((d, i) => ({
+    week: `W${i + 1}`, oee: d.oee, availability: d.availability, performance: d.performance,
+  }));
+
+  const productionComparison = productionData.slice(-4).map((d, i) => ({
+    line: `Line ${["A","B","C","D"][i] ?? i}`, target: d.target, actual: d.actual,
+  }));
+
+  const downtimeData = downtimeRaw.map((d, i) => ({
+    cause: d.cause, minutes: d.minutes, color: DOWNTIME_COLORS[i % DOWNTIME_COLORS.length],
+  }));
+
   const totalDowntime = downtimeData.reduce((s, d) => s + d.minutes, 0);
 
   return (
@@ -70,8 +64,8 @@ export default function AnalyticsPage() {
 
         {/* KPI row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <ReportCard icon={<BarChart3 className="h-5 w-5" />} title="Avg OEE" value="82.5%" unit="last 6 weeks" trend="+4.5% vs last month" trendUp />
-          <ReportCard icon={<TrendingUp className="h-5 w-5" />} title="Production" value="3,031" unit="units this week" trend="+2.1% vs target" trendUp />
+          <ReportCard icon={<BarChart3 className="h-5 w-5" />} title="Avg OEE" value={kpis ? `${kpis.oee}%` : "82.5%"} unit="last 6 weeks" trend="+4.5% vs last month" trendUp />
+          <ReportCard icon={<TrendingUp className="h-5 w-5" />} title="Production" value={kpis ? kpis.production.toLocaleString() : "3,031"} unit="units this week" trend="+2.1% vs target" trendUp />
           <ReportCard icon={<Clock className="h-5 w-5" />} title="Total Downtime" value={`${totalDowntime}m`} unit="this week" trend="+12% vs last week" trendUp={false} />
           <ReportCard icon={<Wrench className="h-5 w-5" />} title="MTBF" value="72h" unit="mean time between failures" trend="+8h vs last month" trendUp />
         </div>

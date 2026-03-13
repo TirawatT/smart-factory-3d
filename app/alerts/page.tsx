@@ -3,8 +3,8 @@
 import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAcknowledgeAlert, useAcknowledgeAllAlerts, useAlerts } from "@/lib/hooks/use-alerts";
 import { DeviceAlert } from "@/lib/types";
-import { useRealtimeStore } from "@/stores/realtime-store";
 import { format } from "date-fns";
 import {
   AlertTriangle,
@@ -161,9 +161,11 @@ type StatusFilter = "all" | "active" | "acknowledged";
 type SeverityFilter = "all" | Severity;
 
 export default function AlertsPage() {
-  const alerts = useRealtimeStore((s) => s.alerts);
-  const acknowledgeAlert = useRealtimeStore((s) => s.acknowledgeAlert);
-  const dismissAlert = useRealtimeStore((s) => s.dismissAlert);
+  const { data: alerts = [] } = useAlerts();
+  const ackMutation = useAcknowledgeAlert();
+  const ackAllMutation = useAcknowledgeAllAlerts();
+  const acknowledgeAlert = (id: string) => ackMutation.mutate(id);
+  const dismissAlert = (id: string) => ackMutation.mutate(id);
 
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>("all");
@@ -195,9 +197,7 @@ export default function AlertsPage() {
     });
   }, [alerts, severityFilter, statusFilter, search]);
 
-  const acknowledgeAll = () => {
-    alerts.filter((a) => !a.acknowledged).forEach((a) => acknowledgeAlert(a.id));
-  };
+  const acknowledgeAll = () => ackAllMutation.mutate();
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: "#070d18" }}>
