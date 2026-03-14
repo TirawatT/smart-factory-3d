@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { useAlerts } from "@/lib/hooks/use-alerts";
 
 interface NavItem {
   label: string;
@@ -117,9 +117,8 @@ export function Sidebar({
     guest: "Guest",
   };
 
-  const activeAlertCount = useRealtimeStore((s) =>
-    s.alerts.filter((a) => !a.acknowledged).length
-  );
+  const { data: activeAlertsList = [] } = useAlerts({ status: "active" });
+  const activeAlertCount = activeAlertsList.filter((a) => !a.acknowledged).length;
 
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
     <>

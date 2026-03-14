@@ -12,9 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DeviceStatus } from "@/lib/types";
-import { useDeviceStore } from "@/stores/device-store";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { DeviceStatus, SensorReading } from "@/lib/types";
+import { useDevices, useDeviceTelemetry } from "@/lib/hooks/use-devices";
 import {
   Check,
   Clipboard,
@@ -30,33 +29,57 @@ const statusConfig: Record<
   DeviceStatus,
   { color: string; bg: string; border: string }
 > = {
-  online: {
-    color: "#00ff9d",
-    bg: "rgba(0,255,157,0.08)",
-    border: "rgba(0,255,157,0.2)",
-  },
-  offline: {
-    color: "#4a6d8a",
-    bg: "rgba(74,109,138,0.08)",
-    border: "rgba(74,109,138,0.2)",
-  },
-  warning: {
-    color: "#ffb800",
-    bg: "rgba(255,184,0,0.08)",
-    border: "rgba(255,184,0,0.2)",
-  },
-  critical: {
-    color: "#ff4560",
-    bg: "rgba(255,69,96,0.08)",
-    border: "rgba(255,69,96,0.2)",
-  },
+  online:   { color: "#00ff9d", bg: "rgba(0,255,157,0.08)",  border: "rgba(0,255,157,0.2)"  },
+  offline:  { color: "#4a6d8a", bg: "rgba(74,109,138,0.08)", border: "rgba(74,109,138,0.2)" },
+  warning:  { color: "#ffb800", bg: "rgba(255,184,0,0.08)",  border: "rgba(255,184,0,0.2)"  },
+  critical: { color: "#ff4560", bg: "rgba(255,69,96,0.08)",  border: "rgba(255,69,96,0.2)"  },
 };
 
-export function DeviceInfoPanel() {
-  const devices = useDeviceStore((s) => s.devices);
-  const selectedDeviceId = useRealtimeStore((s) => s.selectedDeviceId);
-  const setSelectedDeviceId = useRealtimeStore((s) => s.setSelectedDeviceId);
-  const getReadings = useRealtimeStore((s) => s.getReadings);
+interface DeviceInfoPanelProps {
+  selectedDeviceId: string | null;
+  onDeviceSelect: (id: string | null) => void;
+}
+
+function DeviceTelemetryCharts({ deviceId, sensors }: {
+  deviceId: string;
+  sensors: Array<{ id: string; name: string; unit: string; currentValue: number; thresholdWarning?: number; thresholdCritical?: number }>;
+}) {
+  const { data: telemetry = [] } = useDeviceTelemetry(deviceId, 30);
+
+  const readingsBySensor = (sensorId: string): SensorReading[] =>
+    telemetry
+      .filter((t) => t.sensorId === sensorId)
+      .slice(-30)
+      .map((t) => ({ sensorId: t.sensorId, deviceId, value: t.value, timestamp: t.timestamp }));
+
+  return (
+    <>
+      {sensors.map((sensor) => (
+        <div key={sensor.id} className="mb-3">
+          <div className="mb-1 flex items-baseline justify-between">
+            <span className="text-[11px] font-medium" style={{ color: "#e0ecf7" }}>
+              {sensor.name}
+            </span>
+            <span className="text-[11px] sf-mono" style={{ color: "#00c8ff" }}>
+              {sensor.currentValue.toFixed(1)} {sensor.unit}
+            </span>
+          </div>
+          <RealtimeLineChart
+            readings={readingsBySensor(sensor.id)}
+            unit={sensor.unit}
+            height={80}
+            compact
+            showGrid={false}
+            color="#00c8ff"
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+export function DeviceInfoPanel({ selectedDeviceId, onDeviceSelect }: DeviceInfoPanelProps) {
+  const { data: devices = [] } = useDevices();
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState(false);
 
@@ -96,7 +119,7 @@ export function DeviceInfoPanel() {
       <div className="px-4 py-3" style={{ borderBottom: "1px solid #192e48" }}>
         <Select
           value={selectedDeviceId ?? ""}
-          onValueChange={(v) => setSelectedDeviceId(v || null)}
+          onValueChange={(v) => onDeviceSelect(v || null)}
         >
           <SelectTrigger className="h-9 text-xs border-[#192e48] bg-[#0b1520] text-[#e0ecf7]">
             <SelectValue placeholder="Select a device..." />
@@ -139,54 +162,31 @@ export function DeviceInfoPanel() {
                 <Badge
                   variant="outline"
                   className="border-0 text-xs"
-                  style={{
-                    background: statusConfig[device.status].bg,
-                    color: statusConfig[device.status].color,
-                  }}
+                  style={{ background: statusConfig[device.status].bg, color: statusConfig[device.status].color }}
                 >
                   {device.status}
                 </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-[#192e48] text-xs"
-                  style={{ color: "#7fa3c2" }}
-                >
+                <Badge variant="outline" className="border-[#192e48] text-xs" style={{ color: "#7fa3c2" }}>
                   {device.type}
                 </Badge>
               </div>
-              <div
-                className="mt-2 flex items-center gap-1 text-xs"
-                style={{ color: "#4a6d8a" }}
-              >
+              <div className="mt-2 flex items-center gap-1 text-xs" style={{ color: "#4a6d8a" }}>
                 <MapPin className="h-3 w-3" />
                 {device.location}
               </div>
-              <p className="mt-1 text-xs" style={{ color: "#4a6d8a" }}>
-                {device.zone}
-              </p>
+              <p className="mt-1 text-xs" style={{ color: "#4a6d8a" }}>{device.zone}</p>
             </div>
 
-            {/* Divider */}
             <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Sensor Gauges */}
             <div>
-              <h4
-                className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar"
-                style={{ color: "#7fa3c2" }}
-              >
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar" style={{ color: "#7fa3c2" }}>
                 Live Sensors
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 {device.sensors.map((sensor) => (
-                  <div
-                    key={sensor.id}
-                    className="rounded-md p-2"
-                    style={{
-                      background: "#0b1520",
-                      border: "1px solid #192e48",
-                    }}
-                  >
+                  <div key={sensor.id} className="rounded-md p-2" style={{ background: "#0b1520", border: "1px solid #192e48" }}>
                     <GaugeChart
                       value={sensor.currentValue}
                       min={sensor.min}
@@ -202,49 +202,16 @@ export function DeviceInfoPanel() {
               </div>
             </div>
 
-            {/* Divider */}
             <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Mini Charts */}
             <div>
-              <h4
-                className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar"
-                style={{ color: "#7fa3c2" }}
-              >
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar" style={{ color: "#7fa3c2" }}>
                 Recent Trend
               </h4>
-              {device.sensors.map((sensor) => {
-                const readings = getReadings(sensor.id);
-                return (
-                  <div key={sensor.id} className="mb-3">
-                    <div className="mb-1 flex items-baseline justify-between">
-                      <span
-                        className="text-[11px] font-medium"
-                        style={{ color: "#e0ecf7" }}
-                      >
-                        {sensor.name}
-                      </span>
-                      <span
-                        className="text-[11px] sf-mono"
-                        style={{ color: "#00c8ff" }}
-                      >
-                        {sensor.currentValue.toFixed(1)} {sensor.unit}
-                      </span>
-                    </div>
-                    <RealtimeLineChart
-                      readings={readings.slice(-30)}
-                      unit={sensor.unit}
-                      height={80}
-                      compact
-                      showGrid={false}
-                      color="#00c8ff"
-                    />
-                  </div>
-                );
-              })}
+              <DeviceTelemetryCharts deviceId={device.id} sensors={device.sensors} />
             </div>
 
-            {/* Divider */}
             <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Quick Actions */}
@@ -261,33 +228,18 @@ export function DeviceInfoPanel() {
               </Button>
             </div>
 
-            {/* Divider */}
             <div style={{ borderTop: "1px solid #192e48" }} />
 
             {/* Link Generator */}
             <div>
-              <h4
-                className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar"
-                style={{ color: "#7fa3c2" }}
-              >
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider sf-section-bar" style={{ color: "#7fa3c2" }}>
                 Generate Link
               </h4>
 
               {/* Device URL */}
-              <div
-                className="mb-2 rounded-md px-3 py-2"
-                style={{ background: "#0b1520", border: "1px solid #192e48" }}
-              >
-                <p
-                  className="mb-1 text-[10px] uppercase tracking-wider"
-                  style={{ color: "#4a6d8a" }}
-                >
-                  Deep-link URL
-                </p>
-                <p
-                  className="mb-2 break-all text-[11px] sf-mono"
-                  style={{ color: "#00c8ff" }}
-                >
+              <div className="mb-2 rounded-md px-3 py-2" style={{ background: "#0b1520", border: "1px solid #192e48" }}>
+                <p className="mb-1 text-[10px] uppercase tracking-wider" style={{ color: "#4a6d8a" }}>Deep-link URL</p>
+                <p className="mb-2 break-all text-[11px] sf-mono" style={{ color: "#00c8ff" }}>
                   /digital-twin?device={device.id}
                 </p>
                 <Button
@@ -297,34 +249,17 @@ export function DeviceInfoPanel() {
                   onClick={copyDeviceUrl}
                 >
                   {copiedUrl ? (
-                    <>
-                      <Check className="mr-1 h-3 w-3 text-[#00ff9d]" />
-                      Copied!
-                    </>
+                    <><Check className="mr-1 h-3 w-3 text-[#00ff9d]" />Copied!</>
                   ) : (
-                    <>
-                      <Clipboard className="mr-1 h-3 w-3" />
-                      Copy URL
-                    </>
+                    <><Clipboard className="mr-1 h-3 w-3" />Copy URL</>
                   )}
                 </Button>
               </div>
 
               {/* 3D HTML Snippet */}
-              <div
-                className="rounded-md px-3 py-2"
-                style={{ background: "#0b1520", border: "1px solid #192e48" }}
-              >
-                <p
-                  className="mb-1 text-[10px] uppercase tracking-wider"
-                  style={{ color: "#4a6d8a" }}
-                >
-                  3D Viewer snippet
-                </p>
-                <p
-                  className="mb-2 break-all text-[11px] sf-mono leading-relaxed"
-                  style={{ color: "#7fa3c2" }}
-                >
+              <div className="rounded-md px-3 py-2" style={{ background: "#0b1520", border: "1px solid #192e48" }}>
+                <p className="mb-1 text-[10px] uppercase tracking-wider" style={{ color: "#4a6d8a" }}>3D Viewer snippet</p>
+                <p className="mb-2 break-all text-[11px] sf-mono leading-relaxed" style={{ color: "#7fa3c2" }}>
                   {`<a onclick="postMessage({deviceId:'${device.id}'},'*')">📍 ${device.name}</a>`}
                 </p>
                 <Button
@@ -334,15 +269,9 @@ export function DeviceInfoPanel() {
                   onClick={copySnippet}
                 >
                   {copiedSnippet ? (
-                    <>
-                      <Check className="mr-1 h-3 w-3 text-[#00ff9d]" />
-                      Copied!
-                    </>
+                    <><Check className="mr-1 h-3 w-3 text-[#00ff9d]" />Copied!</>
                   ) : (
-                    <>
-                      <Code2 className="mr-1 h-3 w-3" />
-                      Copy 3D Snippet
-                    </>
+                    <><Code2 className="mr-1 h-3 w-3" />Copy 3D Snippet</>
                   )}
                 </Button>
               </div>
@@ -350,9 +279,7 @@ export function DeviceInfoPanel() {
               {device.matterportTagId && (
                 <p className="mt-2 text-[10px]" style={{ color: "#4a6d8a" }}>
                   Matterport Tag ID:{" "}
-                  <span className="sf-mono" style={{ color: "#7fa3c2" }}>
-                    {device.matterportTagId}
-                  </span>
+                  <span className="sf-mono" style={{ color: "#7fa3c2" }}>{device.matterportTagId}</span>
                 </p>
               )}
             </div>

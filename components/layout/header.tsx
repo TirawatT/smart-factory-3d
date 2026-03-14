@@ -1,7 +1,7 @@
 "use client";
 
 import { useMobileMenu } from "@/components/layout/app-shell";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { useAlerts } from "@/lib/hooks/use-alerts";
 import { Bell, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   const { openMobileMenu } = useMobileMenu();
-  const alerts = useRealtimeStore((s) => s.alerts);
+  const { data: alerts = [] } = useAlerts({ status: "active" });
   const activeAlerts = alerts.filter((a) => !a.acknowledged).length;
 
   const [now, setNow] = useState<Date | null>(null);

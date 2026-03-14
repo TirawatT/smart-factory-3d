@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeviceStore } from "@/stores/device-store";
+import { useDevices } from "@/lib/hooks/use-devices";
 import {
   Cell,
   Legend,
@@ -18,7 +18,7 @@ const COLORS: Record<string, string> = {
 };
 
 export function DeviceStatusChart() {
-  const devices = useDeviceStore((s) => s.devices);
+  const { data: devices = [] } = useDevices();
 
   const statusCounts = devices.reduce(
     (acc, d) => {

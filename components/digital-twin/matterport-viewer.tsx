@@ -2,39 +2,36 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useDeviceStore } from "@/stores/device-store";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { useDevices } from "@/lib/hooks/use-devices";
 import { Box, Maximize2, Minimize2, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface MatterportViewerProps {
   className?: string;
+  onDeviceSelect: (deviceId: string) => void;
 }
 
-export function MatterportViewer({ className }: MatterportViewerProps) {
+export function MatterportViewer({ className, onDeviceSelect }: MatterportViewerProps) {
   const defaultUrl = "/src_3d/IndustrialWorkshopFoundry2/index.htm";
   const [url, setUrl] = useState(defaultUrl);
   const [editUrl, setEditUrl] = useState("");
   const [showConfig, setShowConfig] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
-  const setSelectedDeviceId = useRealtimeStore((s) => s.setSelectedDeviceId);
-  const getDeviceByTagId = useDeviceStore((s) => s.getDeviceByTagId);
+  const { data: devices = [] } = useDevices();
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       try {
         const data = event.data;
         if (!data) return;
-        // Support { deviceId } direct reference
         if (data.deviceId) {
-          setSelectedDeviceId(data.deviceId);
+          onDeviceSelect(data.deviceId);
           return;
         }
-        // Support legacy { tagId } matterport tag approach
         if (data.tagId) {
-          const device = getDeviceByTagId(data.tagId);
-          if (device) setSelectedDeviceId(device.id);
+          const device = devices.find((d) => d.matterportTagId === data.tagId);
+          if (device) onDeviceSelect(device.id);
         }
       } catch {
         // ignore non-JSON messages
@@ -42,7 +39,7 @@ export function MatterportViewer({ className }: MatterportViewerProps) {
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [setSelectedDeviceId, getDeviceByTagId]);
+  }, [onDeviceSelect, devices]);
 
   const handleSaveUrl = () => {
     setUrl(editUrl);
@@ -52,10 +49,7 @@ export function MatterportViewer({ className }: MatterportViewerProps) {
   return (
     <div
       className={`relative flex flex-col overflow-hidden rounded-lg ${className ?? ""} ${fullscreen ? "fixed inset-0 z-50" : ""}`}
-      style={{
-        background: "#0b1520",
-        border: "1px solid #192e48",
-      }}
+      style={{ background: "#0b1520", border: "1px solid #192e48" }}
     >
       {/* Toolbar */}
       <div
@@ -65,16 +59,10 @@ export function MatterportViewer({ className }: MatterportViewerProps) {
           borderBottom: "1px solid #192e48",
         }}
       >
-        <div
-          className="flex items-center gap-2 text-sm font-medium"
-          style={{ color: "#e0ecf7" }}
-        >
+        <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#e0ecf7" }}>
           <Box
             className="h-4 w-4"
-            style={{
-              color: "#00c8ff",
-              filter: "drop-shadow(0 0 4px rgba(0,200,255,0.5))",
-            }}
+            style={{ color: "#00c8ff", filter: "drop-shadow(0 0 4px rgba(0,200,255,0.5))" }}
           />
           <span>Digital Twin</span>
           <span style={{ color: "#4a6d8a" }}>—</span>
@@ -147,32 +135,20 @@ export function MatterportViewer({ className }: MatterportViewerProps) {
             >
               <Box
                 className="h-16 w-16"
-                style={{
-                  color: "#00c8ff",
-                  opacity: 0.4,
-                  filter: "drop-shadow(0 0 10px rgba(0,200,255,0.3))",
-                }}
+                style={{ color: "#00c8ff", opacity: 0.4, filter: "drop-shadow(0 0 10px rgba(0,200,255,0.3))" }}
               />
             </div>
             <div>
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: "#e0ecf7" }}
-              >
+              <h3 className="text-lg font-semibold" style={{ color: "#e0ecf7" }}>
                 3D Digital Twin
               </h3>
               <p className="mt-1 text-sm" style={{ color: "#7fa3c2" }}>
                 Click the{" "}
-                <Settings
-                  className="inline h-3.5 w-3.5"
-                  style={{ color: "#00c8ff" }}
-                />{" "}
-                icon to configure Matterport URL or paste any 3D model iframe
-                source.
+                <Settings className="inline h-3.5 w-3.5" style={{ color: "#00c8ff" }} />{" "}
+                icon to configure Matterport URL or paste any 3D model iframe source.
               </p>
               <p className="mt-2 text-xs" style={{ color: "#4a6d8a" }}>
-                Clicking on tags/pins in the 3D model will display device
-                information in the side panel.
+                Clicking on tags/pins in the 3D model will display device information in the side panel.
               </p>
             </div>
             <Button
