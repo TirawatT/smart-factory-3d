@@ -6,9 +6,9 @@ import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DeviceStatus } from "@/lib/types";
-import { useDeviceStore } from "@/stores/device-store";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { DeviceStatus, SensorReading } from "@/lib/types";
+import { useDevice, useDeviceTelemetry } from "@/lib/hooks/use-devices";
+import { useAlerts } from "@/lib/hooks/use-alerts";
 import { format } from "date-fns";
 import {
   AlertTriangle,
@@ -54,11 +54,20 @@ export default function DeviceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const devices = useDeviceStore((s) => s.devices);
-  const getReadings = useRealtimeStore((s) => s.getReadings);
-  const alerts = useRealtimeStore((s) => s.alerts);
+  const { data: device, isLoading } = useDevice(id);
+  const { data: telemetry = [] } = useDeviceTelemetry(id);
+  const { data: allAlerts = [] } = useAlerts({ deviceId: id });
 
-  const device = devices.find((d) => d.id === id);
+  if (isLoading) {
+    return (
+      <>
+        <Header title="Loading..." />
+        <div className="flex items-center justify-center p-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#00c8ff] border-t-transparent" />
+        </div>
+      </>
+    );
+  }
 
   if (!device) {
     return (
@@ -83,8 +92,13 @@ export default function DeviceDetailPage({
     );
   }
 
-  const deviceAlerts = alerts.filter((a) => a.deviceId === device.id);
   const cfg = statusConfig[device.status];
+
+  // Build per-sensor readings from telemetry API response
+  const readingsBySensor = (sensorId: string): SensorReading[] =>
+    telemetry
+      .filter((t) => t.sensorId === sensorId)
+      .map((t) => ({ sensorId: t.sensorId, deviceId: id, value: t.value, timestamp: t.timestamp }));
 
   return (
     <>
@@ -211,46 +225,16 @@ export default function DeviceDetailPage({
                   />
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <p
-                        className="text-[10px] uppercase"
-                        style={{ color: "#4a6d8a" }}
-                      >
-                        Min
-                      </p>
-                      <p
-                        className="text-xs font-medium sf-mono"
-                        style={{ color: "#7fa3c2" }}
-                      >
-                        {sensor.min}
-                      </p>
+                      <p className="text-[10px] uppercase" style={{ color: "#4a6d8a" }}>Min</p>
+                      <p className="text-xs font-medium sf-mono" style={{ color: "#7fa3c2" }}>{sensor.min}</p>
                     </div>
                     <div>
-                      <p
-                        className="text-[10px] uppercase"
-                        style={{ color: "#4a6d8a" }}
-                      >
-                        Current
-                      </p>
-                      <p
-                        className="text-xs font-bold sf-mono"
-                        style={{ color: "#00c8ff" }}
-                      >
-                        {sensor.currentValue.toFixed(1)}
-                      </p>
+                      <p className="text-[10px] uppercase" style={{ color: "#4a6d8a" }}>Current</p>
+                      <p className="text-xs font-bold sf-mono" style={{ color: "#00c8ff" }}>{sensor.currentValue.toFixed(1)}</p>
                     </div>
                     <div>
-                      <p
-                        className="text-[10px] uppercase"
-                        style={{ color: "#4a6d8a" }}
-                      >
-                        Max
-                      </p>
-                      <p
-                        className="text-xs font-medium sf-mono"
-                        style={{ color: "#7fa3c2" }}
-                      >
-                        {sensor.max}
-                      </p>
+                      <p className="text-[10px] uppercase" style={{ color: "#4a6d8a" }}>Max</p>
+                      <p className="text-xs font-medium sf-mono" style={{ color: "#7fa3c2" }}>{sensor.max}</p>
                     </div>
                   </div>
                 </div>
@@ -261,41 +245,35 @@ export default function DeviceDetailPage({
           {/* Charts Tab */}
           <TabsContent value="charts" className="mt-6">
             <div className="space-y-6">
-              {device.sensors.map((sensor) => {
-                const readings = getReadings(sensor.id);
-                return (
-                  <div key={sensor.id} className="rounded-lg p-4 sf-card">
-                    <div className="mb-3 flex items-baseline justify-between">
-                      <h4
-                        className="text-sm font-medium sf-section-bar"
-                        style={{ color: "#e0ecf7" }}
-                      >
-                        {sensor.name}
-                      </h4>
-                      <span
-                        className="sf-mono text-sm"
-                        style={{ color: "#00c8ff" }}
-                      >
-                        {sensor.currentValue.toFixed(1)} {sensor.unit}
-                      </span>
-                    </div>
-                    <RealtimeLineChart
-                      readings={readings}
-                      unit={sensor.unit}
-                      color="#00c8ff"
-                      thresholdWarning={sensor.thresholdWarning}
-                      thresholdCritical={sensor.thresholdCritical}
-                      height={200}
-                    />
+              {device.sensors.map((sensor) => (
+                <div key={sensor.id} className="rounded-lg p-4 sf-card">
+                  <div className="mb-3 flex items-baseline justify-between">
+                    <h4
+                      className="text-sm font-medium sf-section-bar"
+                      style={{ color: "#e0ecf7" }}
+                    >
+                      {sensor.name}
+                    </h4>
+                    <span className="sf-mono text-sm" style={{ color: "#00c8ff" }}>
+                      {sensor.currentValue.toFixed(1)} {sensor.unit}
+                    </span>
                   </div>
-                );
-              })}
+                  <RealtimeLineChart
+                    readings={readingsBySensor(sensor.id)}
+                    unit={sensor.unit}
+                    color="#00c8ff"
+                    thresholdWarning={sensor.thresholdWarning}
+                    thresholdCritical={sensor.thresholdCritical}
+                    height={200}
+                  />
+                </div>
+              ))}
             </div>
           </TabsContent>
 
           {/* Alerts Tab */}
           <TabsContent value="alerts" className="mt-6">
-            {deviceAlerts.length === 0 ? (
+            {allAlerts.length === 0 ? (
               <div className="py-12 text-center" style={{ color: "#4a6d8a" }}>
                 <AlertTriangle
                   className="mx-auto mb-3 h-10 w-10"
@@ -305,7 +283,7 @@ export default function DeviceDetailPage({
               </div>
             ) : (
               <div className="space-y-2">
-                {deviceAlerts.map((alert) => {
+                {allAlerts.map((alert) => {
                   const alertColor =
                     alert.severity === "critical"
                       ? "#ff4560"
@@ -337,36 +315,21 @@ export default function DeviceDetailPage({
                           <Badge
                             variant="outline"
                             className="border-0 text-[10px] uppercase sf-mono"
-                            style={{
-                              background: `${alertColor}15`,
-                              color: alertColor,
-                            }}
+                            style={{ background: `${alertColor}15`, color: alertColor }}
                           >
                             {alert.severity}
                           </Badge>
                           {alert.acknowledged && (
-                            <span
-                              className="text-[10px]"
-                              style={{ color: "#4a6d8a" }}
-                            >
+                            <span className="text-[10px]" style={{ color: "#4a6d8a" }}>
                               Acknowledged
                             </span>
                           )}
                         </div>
-                        <p
-                          className="mt-1 text-sm"
-                          style={{ color: "#e0ecf7" }}
-                        >
+                        <p className="mt-1 text-sm" style={{ color: "#e0ecf7" }}>
                           {alert.message}
                         </p>
-                        <p
-                          className="mt-1 text-[10px] sf-mono"
-                          style={{ color: "#4a6d8a" }}
-                        >
-                          {format(
-                            new Date(alert.timestamp),
-                            "dd MMM yyyy HH:mm:ss",
-                          )}
+                        <p className="mt-1 text-[10px] sf-mono" style={{ color: "#4a6d8a" }}>
+                          {format(new Date(alert.timestamp), "dd MMM yyyy HH:mm:ss")}
                         </p>
                       </div>
                     </div>

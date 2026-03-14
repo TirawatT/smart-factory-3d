@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { ZONES } from "@/lib/mock-data";
 import { Device, DeviceStatus, DeviceType } from "@/lib/types";
-import { useDeviceStore } from "@/stores/device-store";
+import { useCreateDevice, useUpdateDevice } from "@/lib/hooks/use-devices";
 import { useEffect, useState } from "react";
 
 interface DeviceFormDialogProps {
@@ -33,8 +33,8 @@ export function DeviceFormDialog({
   onOpenChange,
   editDevice,
 }: DeviceFormDialogProps) {
-  const addDevice = useDeviceStore((s) => s.addDevice);
-  const updateDevice = useDeviceStore((s) => s.updateDevice);
+  const { mutate: createDevice } = useCreateDevice();
+  const { mutate: updateDevice } = useUpdateDevice();
 
   const [name, setName] = useState("");
   const [type, setType] = useState<DeviceType>("temperature");
@@ -63,20 +63,9 @@ export function DeviceFormDialog({
     if (!name || !type || !location || !zone) return;
 
     if (editDevice) {
-      updateDevice(editDevice.id, { name, type, location, zone });
-      if (editDevice.status !== status) {
-        useDeviceStore.getState().updateDeviceStatus(editDevice.id, status);
-      }
+      updateDevice({ id: editDevice.id, data: { name, type, location, zone } });
     } else {
-      addDevice({
-        name,
-        type,
-        description: "",
-        location,
-        zone,
-        matterportTagId: "",
-        sensors: [],
-      });
+      createDevice({ name, type, description: "", location, zone, matterportTagId: "", sensors: [] });
     }
     onOpenChange(false);
   };

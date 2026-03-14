@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertSeverity } from "@/lib/types";
-import { useRealtimeStore } from "@/stores/realtime-store";
+import { useAlerts, useAcknowledgeAlert } from "@/lib/hooks/use-alerts";
 import { format } from "date-fns";
 import { AlertTriangle, Check, Info, XCircle } from "lucide-react";
 
@@ -32,9 +32,9 @@ const severityConfig: Record<
 };
 
 export function RecentAlerts() {
-  const alerts = useRealtimeStore((s) => s.alerts);
-  const acknowledgeAlert = useRealtimeStore((s) => s.acknowledgeAlert);
-  const recentAlerts = alerts.slice(0, 6);
+  const { data: allAlerts = [] } = useAlerts({ limit: 6 });
+  const { mutate: acknowledgeAlert } = useAcknowledgeAlert();
+  const recentAlerts = allAlerts.slice(0, 6);
 
   return (
     <div className="rounded-lg p-4 sf-card">

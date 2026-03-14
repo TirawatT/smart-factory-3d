@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Device, DeviceStatus } from "@/lib/types";
-import { useDeviceStore } from "@/stores/device-store";
+import { useDeleteDevice } from "@/lib/hooks/use-devices";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -39,7 +39,7 @@ interface DeviceTableProps {
 }
 
 export function DeviceTable({ devices, onEdit }: DeviceTableProps) {
-  const deleteDevice = useDeviceStore((s) => s.deleteDevice);
+  const { mutate: deleteDevice } = useDeleteDevice();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleDelete = () => {

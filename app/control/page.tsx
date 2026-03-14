@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/stores/auth-store";
-import { useDeviceStore } from "@/stores/device-store";
+import { useDevices, useControlDevice } from "@/lib/hooks/use-devices";
 import { Device } from "@/lib/types";
 import { format } from "date-fns";
 import {
@@ -79,8 +79,8 @@ function SliderControl({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ControlPage() {
-  const devices = useDeviceStore((s) => s.devices);
-  const updateSensorValue = useDeviceStore((s) => s.updateSensorValue);
+  const { data: devices = [] } = useDevices();
+  const { mutate: sendCommand } = useControlDevice();
   const hasPermission = useAuthStore((s) => s.hasPermission);
   const user = useAuthStore((s) => s.user);
 
@@ -96,10 +96,11 @@ export default function ControlPage() {
 
   // initialise running state from device status
   useEffect(() => {
+    if (devices.length === 0) return;
     const init: Record<string, boolean> = {};
     devices.forEach((d) => { init[d.id] = d.status === "online"; });
-    setRunning(init);
-  }, []);
+    setRunning((r) => ({ ...init, ...r }));
+  }, [devices.length]);
 
   // initialise slider values from first sensor of each device
   useEffect(() => {
@@ -128,13 +129,14 @@ export default function ControlPage() {
     if (!canStart) return;
     const next = !running[device.id];
     setRunning((r) => ({ ...r, [device.id]: next }));
+    sendCommand({ deviceId: device.id, command: next ? "start" : "stop" });
     addCommand(device.name, next ? "START" : "STOP");
   };
 
   const handleSliderChange = (device: Device, sensorId: string, value: number) => {
     if (!canAdjust) return;
     setSliderValues((v) => ({ ...v, [sensorId]: value }));
-    updateSensorValue(device.id, sensorId, value);
+    sendCommand({ deviceId: device.id, command: "adjust", params: { sensorId, value } });
     addCommand(device.name, "SET_PARAM", `sensor=${sensorId} value=${value.toFixed(1)}`);
   };
 

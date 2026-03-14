@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/select";
 import { ZONES } from "@/lib/mock-data";
 import { Device } from "@/lib/types";
-import { useDeviceStore } from "@/stores/device-store";
+import { useDevices } from "@/lib/hooks/use-devices";
 import { Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function DevicesPage() {
-  const devices = useDeviceStore((s) => s.devices);
+  const { data: devices = [] } = useDevices();
   const [search, setSearch] = useState("");
   const [filterZone, setFilterZone] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
