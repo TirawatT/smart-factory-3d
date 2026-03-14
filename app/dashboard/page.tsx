@@ -1,7 +1,7 @@
 "use client";
 
 import { DeviceStatusChart } from "@/components/dashboard/device-status-chart";
-import { RealtimeOverview } from "@/components/dashboard/realtime-overview";
+import { LiveTelemetryOverview } from "@/components/dashboard/live-telemetry-overview";
 import { RecentAlerts } from "@/components/dashboard/recent-alerts";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { Header } from "@/components/layout/header";
@@ -31,7 +31,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Realtime Overview */}
-        <RealtimeOverview />
+        <LiveTelemetryOverview />
 
         {/* Quick Links */}
         <div className="flex gap-3">

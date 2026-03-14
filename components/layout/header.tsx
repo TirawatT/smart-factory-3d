@@ -1,6 +1,7 @@
 "use client";
 
 import { useMobileMenu } from "@/components/layout/app-shell";
+import { LiveIndicator } from "@/components/ui/live-indicator";
 import { useAlerts } from "@/lib/hooks/use-alerts";
 import { Bell, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -85,28 +86,8 @@ export function Header({ title, subtitle }: HeaderProps) {
 
       {/* Right controls */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* LIVE badge */}
-        <div
-          className="hidden sm:flex items-center gap-1.5 rounded px-2 py-0.5"
-          style={{
-            background: "rgba(0,255,157,0.1)",
-            border: "1px solid rgba(0,255,157,0.3)",
-          }}
-        >
-          <span
-            className="h-1.5 w-1.5 rounded-full sf-pulse-dot"
-            style={{
-              background: "#00ff9d",
-              boxShadow: "0 0 4px rgba(0,255,157,0.6)",
-            }}
-          />
-          <span
-            className="text-[10px] font-bold sf-mono"
-            style={{ color: "#00ff9d" }}
-          >
-            LIVE
-          </span>
-        </div>
+        {/* LIVE / connection status indicator */}
+        <LiveIndicator />
 
         {/* Clock */}
         <div className="hidden sm:flex flex-col items-end">
