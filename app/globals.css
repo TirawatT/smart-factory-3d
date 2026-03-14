@@ -54,6 +54,15 @@
   --color-neon-purple: #a855f7;
 }
 
+/* ── Theme CSS vars (overridden by ThemeProvider) ── */
+:root {
+  --sf-primary: #00c8ff;
+  --sf-primary-rgb: 0,200,255;
+  --sf-primary-glow: rgba(0,200,255,0.4);
+  --sf-radius: 0.625rem;
+  --sf-font-mono: 'IBM Plex Mono', monospace;
+}
+
 /* ── Industrial Smart Factory Dark Theme ── */
 :root {
   --radius: 0.625rem;
@@ -146,16 +155,16 @@
     box-shadow 0.3s ease;
 }
 .sf-card:hover {
-  border-color: rgba(0, 200, 255, 0.3);
+  border-color: color-mix(in srgb, var(--sf-primary) 30%, transparent);
   box-shadow:
-    0 0 20px rgba(0, 200, 255, 0.06),
-    inset 0 1px 0 rgba(0, 200, 255, 0.05);
+    0 0 20px color-mix(in srgb, var(--sf-primary) 6%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--sf-primary) 5%, transparent);
 }
 
 /* Neon glow text */
 .sf-glow-cyan {
-  color: #00c8ff;
-  text-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+  color: var(--sf-primary);
+  text-shadow: 0 0 8px var(--sf-primary-glow);
 }
 .sf-glow-green {
   color: #00ff9d;
@@ -180,8 +189,8 @@
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 200, 255, 0.015) 2px,
-    rgba(0, 200, 255, 0.015) 4px
+    color-mix(in srgb, var(--sf-primary) 1.5%, transparent) 2px,
+    color-mix(in srgb, var(--sf-primary) 1.5%, transparent) 4px
   );
   z-index: 1;
 }
@@ -206,10 +215,10 @@
 @keyframes sf-border-glow {
   0%,
   100% {
-    border-color: rgba(0, 200, 255, 0.15);
+    border-color: color-mix(in srgb, var(--sf-primary) 15%, transparent);
   }
   50% {
-    border-color: rgba(0, 200, 255, 0.35);
+    border-color: color-mix(in srgb, var(--sf-primary) 35%, transparent);
   }
 }
 .sf-border-glow {
@@ -219,8 +228,8 @@
 /* Grid background pattern */
 .sf-grid-bg {
   background-image:
-    linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--sf-primary) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--sf-primary) 3%, transparent) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -259,7 +268,7 @@
   bottom: 2px;
   width: 3px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #00c8ff, #00ff9d);
+  background: linear-gradient(180deg, var(--sf-primary), #00ff9d);
 }
 
 /* Mono font utility */
@@ -296,4 +305,15 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #1e3c60;
+}
+
+/* ── Style-specific card overrides ── */
+[data-style="professional"] .sf-card {
+  background: #0b1520;
+  border-radius: 0.25rem;
+}
+[data-style="corporate"] .sf-card {
+  background: rgba(11, 21, 32, 0.8);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
 }

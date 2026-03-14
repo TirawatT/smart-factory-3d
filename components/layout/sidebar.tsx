@@ -33,6 +33,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAlerts } from "@/lib/hooks/use-alerts";
+import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 
 interface NavItem {
   label: string;
@@ -299,6 +300,7 @@ export function Sidebar({
               {user ? roleLabel[user.role] : ""}
             </p>
           </div>
+          <ThemeSwitcher />
           <Tooltip>
             <TooltipTrigger asChild>
               <button
